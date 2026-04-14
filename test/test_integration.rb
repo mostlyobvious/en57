@@ -9,7 +9,7 @@ module En57
       @connection = PG.connect(ENV.fetch("DATABASE_URL", "postgres:///en57_test"))
       @connection.exec(File.read(File.expand_path("../db/schema.sql", __dir__)))
       @connection.exec("TRUNCATE events")
-      @event_store = EventStore.new(PgRepository.new(@connection))
+      @event_store = EventStore.new(PgRepository.new(@connection, JsonSerializer.new))
     end
 
     def teardown

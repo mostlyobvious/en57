@@ -1,0 +1,11 @@
+# Generated from lib/en57/json_serializer.rb with RBS::Inline
+
+module En57
+  class JsonSerializer
+    # : (untyped payload) -> String
+    def dump: (untyped payload) -> String
+
+    # : (String string) -> untyped
+    def load: (String string) -> untyped
+  end
+end

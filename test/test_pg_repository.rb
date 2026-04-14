@@ -17,7 +17,7 @@ module En57
         ]
       )
 
-      repository = PgRepository.new(connection)
+      repository = PgRepository.new(connection, JsonSerializer.new)
       repository.append(
         [
           Event.new(type: "CredditToppedUp", data: {amount: 100}),
@@ -39,7 +39,7 @@ module En57
         ["SELECT type, data FROM read_events()", []]
       )
 
-      repository = PgRepository.new(connection)
+      repository = PgRepository.new(connection, JsonSerializer.new)
 
       assert_equal(
         [
