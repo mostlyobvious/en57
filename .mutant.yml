@@ -1,0 +1,9 @@
+usage: opensource
+includes:
+- lib
+- test
+integration:
+  name: minitest
+matcher:
+  subjects:
+    - En57*

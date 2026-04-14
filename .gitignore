@@ -1,0 +1,4 @@
+/.bundle/
+/.mutant/
+/pkg/
+/tmp/
