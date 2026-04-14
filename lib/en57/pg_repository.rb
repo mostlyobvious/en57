@@ -4,7 +4,7 @@
 
 module En57
   class PgRepository
-    #: (untyped connection, untyped serializer) -> void
+    #: (untyped connection, _Serializer serializer) -> void
     def initialize(connection, serializer)
       @connection = connection
       @serializer = serializer

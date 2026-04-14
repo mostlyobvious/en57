@@ -1,6 +1,12 @@
 # Generated from lib/en57/json_serializer.rb with RBS::Inline
 
 module En57
+  interface _Serializer
+    def dump: (untyped) -> String
+
+    def load: (String) -> untyped
+  end
+
   class JsonSerializer
     # : (untyped payload) -> String
     def dump: (untyped payload) -> String

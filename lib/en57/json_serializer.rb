@@ -5,6 +5,12 @@
 require "json"
 
 module En57
+  # @rbs!
+  #   interface _Serializer
+  #     def dump: (untyped) -> String
+  #     def load: (String) -> untyped
+  #   end
+
   class JsonSerializer
     #: (untyped payload) -> String
     def dump(payload)
