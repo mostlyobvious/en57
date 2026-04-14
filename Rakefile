@@ -9,7 +9,7 @@ require "standard/rake"
 
 namespace :rbs do
   task :generate do
-    system("bundle exec rbs-inline --output=sig/ lib/")
+    system("bin/rbs-inline --output=sig/ lib/")
   end
 end
 
