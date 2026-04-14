@@ -28,4 +28,27 @@ class TestEventStore < Minitest::Test
 
     connection.verify
   end
+
+  def test_read_events
+    connection = Minitest::Mock.new
+    connection.expect(
+      :exec_params,
+      [
+        {"type" => "CredditToppedUp", "data" => '{"amount":100}'},
+        {"type" => "CredditToppedUp", "data" => '{"amount":50}'}
+      ],
+      ["SELECT type, data FROM events", []]
+    )
+
+    event_store = En57::EventStore.new(connection)
+
+    assert_equal(
+      [
+        En57::Event.new(type: "CredditToppedUp", data: {"amount" => 100}),
+        En57::Event.new(type: "CredditToppedUp", data: {"amount" => 50})
+      ],
+      event_store.read
+    )
+    connection.verify
+  end
 end

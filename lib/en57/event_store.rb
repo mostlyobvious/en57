@@ -26,5 +26,12 @@ module En57
         params
       )
     end
+
+    #: () -> Array[Event]
+    def read
+      @connection.exec_params("SELECT type, data FROM events", []).map do |row|
+        Event.new(type: row.fetch("type"), data: JSON.parse(row.fetch("data")))
+      end
+    end
   end
 end

@@ -1,0 +1,16 @@
+# Generated from lib/en57/event.rb with RBS::Inline
+
+module En57
+  class Event < Data
+    attr_reader type(): untyped
+
+    attr_reader data(): untyped
+
+    def self.new: (untyped type, untyped data) -> instance
+                | (type: untyped, data: untyped) -> instance
+
+    def self.members: () -> [ :type, :data ]
+
+    def members: () -> [ :type, :data ]
+  end
+end
