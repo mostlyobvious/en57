@@ -3,7 +3,7 @@
 require "test_helper"
 require "pg"
 
-class IntegrationTestEventStore < Minitest::Test
+class TestIntegration < Minitest::Test
   def setup
     @connection = PG.connect(ENV.fetch("DATABASE_URL", "postgres:///en57_test"))
     @connection.exec("CREATE TABLE IF NOT EXISTS events (type TEXT NOT NULL, data JSONB NOT NULL)")
@@ -15,7 +15,7 @@ class IntegrationTestEventStore < Minitest::Test
     @connection&.close
   end
 
-  def test_writes_and_reads_two_events
+  def test_happy_path
     @event_store.append(
       [
         En57::Event.new(type: "CredditToppedUp", data: {amount: 100}),
