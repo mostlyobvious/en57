@@ -15,4 +15,4 @@ task :mutate_since_head do
   system("bin/mutant run --since HEAD")
 end
 
-task default: %i[test standard mutate_since_head]
+task default: %i[test mutate_since_head standard]
