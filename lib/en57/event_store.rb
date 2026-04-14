@@ -5,12 +5,6 @@
 require "json"
 
 module En57
-  # @rbs!
-  #   interface _Event
-  #     def type: () -> String
-  #     def data: () -> untyped
-  #   end
-
   class EventStore
     #: (untyped connection) -> void
     def initialize(connection)

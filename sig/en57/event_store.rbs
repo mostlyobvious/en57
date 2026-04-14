@@ -1,12 +1,6 @@
 # Generated from lib/en57/event_store.rb with RBS::Inline
 
 module En57
-  interface _Event
-    def type: () -> String
-
-    def data: () -> untyped
-  end
-
   class EventStore
     # : (untyped connection) -> void
     def initialize: (untyped connection) -> void
