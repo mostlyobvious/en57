@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS events (
+  type TEXT NOT NULL,
+  data JSONB NOT NULL
+);

@@ -7,7 +7,7 @@ module En57
   class TestIntegration < Minitest::Test
     def setup
       @connection = PG.connect(ENV.fetch("DATABASE_URL", "postgres:///en57_test"))
-      @connection.exec("CREATE TABLE IF NOT EXISTS events (type TEXT NOT NULL, data JSONB NOT NULL)")
+      @connection.exec(File.read(File.expand_path("../db/schema.sql", __dir__)))
       @connection.exec("TRUNCATE events")
       @event_store = EventStore.new(@connection)
     end
