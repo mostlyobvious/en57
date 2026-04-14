@@ -9,3 +9,8 @@ LANGUAGE SQL AS $$
   SELECT e->>'type', e->'data'
   FROM jsonb_array_elements(events) AS e;
 $$;
+
+CREATE OR REPLACE FUNCTION read_events() RETURNS TABLE(type TEXT, data JSONB)
+LANGUAGE SQL AS $$
+  SELECT type, data FROM events;
+$$;

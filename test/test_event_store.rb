@@ -38,7 +38,7 @@ module En57
           {"type" => "CredditToppedUp", "data" => '{"amount":100}'},
           {"type" => "CredditToppedUp", "data" => '{"amount":50}'}
         ],
-        ["SELECT type, data FROM events", []]
+        ["SELECT type, data FROM read_events()", []]
       )
 
       event_store = EventStore.new(connection)
