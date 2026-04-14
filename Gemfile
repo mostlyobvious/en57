@@ -7,5 +7,6 @@ gemspec
 gem "irb"
 gem "rake"
 gem "minitest"
+gem "minitest-mock"
 gem "standard"
 gem "mutant-minitest"

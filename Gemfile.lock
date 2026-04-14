@@ -24,6 +24,7 @@ GEM
     minitest (6.0.3)
       drb (~> 2.0)
       prism (~> 1.5)
+    minitest-mock (5.27.0)
     mutant (0.16.0)
       diff-lcs (>= 1.6, < 3)
       irb (~> 1.15)
@@ -121,6 +122,7 @@ DEPENDENCIES
   en57!
   irb
   minitest
+  minitest-mock
   mutant-minitest
   rake
   standard
@@ -138,6 +140,7 @@ CHECKSUMS
   language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   minitest (6.0.3) sha256=88ac8a1de36c00692420e7cb3cc11a0773bbcb126aee1c249f320160a7d11411
+  minitest-mock (5.27.0) sha256=7040ed7185417a966920987eaa6eaf1be4ea1fc5b25bb03ff4703f98564a55b0
   mutant (0.16.0) sha256=651dfbf4e0c32bb918e823505d41348070d7f3f76430cf046696b06e3887b9c4
   mutant-minitest (0.16.0) sha256=0ba5f541694591f3149c30a250f0792962bb69c800754bdf4bccad48de95f96e
   mutex_m (0.3.0) sha256=cfcb04ac16b69c4813777022fdceda24e9f798e48092a2b817eb4c0a782b0751
