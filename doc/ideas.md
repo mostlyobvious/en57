@@ -10,10 +10,6 @@ Random list of ideas, but not rules. These give some hint about the direction, b
 
 * only newest released Ruby version, no backwards compatibility
 
-* use inline RBS type signatures in `:` syntax
-
-* verify RBS types at test runtime
-
 * 100% mutation coverage with `mutant`
 
 * Ruby code formatting and linting with `standard`
