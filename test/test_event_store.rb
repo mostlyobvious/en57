@@ -21,8 +21,8 @@ class TestEventStore < Minitest::Test
     event_store = En57::EventStore.new(connection)
     event_store.append(
       [
-        Event.new(type: "CredditToppedUp", data: { amount: 100 }),
-        Event.new(type: "CredditToppedUp", data: { amount: 50 })
+        Event.new(type: "CredditToppedUp", data: {amount: 100}),
+        Event.new(type: "CredditToppedUp", data: {amount: 50})
       ]
     )
 
