@@ -7,6 +7,14 @@ Minitest::TestTask.create
 
 require "standard/rake"
 
+namespace :rbs do
+  task :generate do
+    system("bundle exec rbs-inline --output=sig/ lib/")
+  end
+end
+
+task test: "rbs:generate"
+
 task :mutate do
   system("bin/mutant run")
 end

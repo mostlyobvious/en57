@@ -10,3 +10,5 @@ gem "minitest"
 gem "minitest-mock"
 gem "standard"
 gem "mutant-minitest"
+gem "rbs"
+gem "rbs-inline", require: false
