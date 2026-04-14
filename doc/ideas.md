@@ -8,10 +8,6 @@ Random list of ideas, but not rules. These give some hint about the direction, b
 
 * each release includes a benchmark result
 
-* use gitmoji for commit messages formatting
-
-* always describe why a change is being made, what alredy lives in the diff
-
 * only newest released Ruby version, no backwards compatibility
 
 * use inline RBS type signatures in `:` syntax
