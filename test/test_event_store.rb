@@ -6,51 +6,23 @@ module En57
   class TestEventStore < Minitest::Test
     cover EventStore
 
-    Event = Data.define(:type, :data)
-
     def test_append_event
-      connection = Minitest::Mock.new
-      connection.expect(
-        :exec_params,
-        nil,
-        [
-          "SELECT append_events($1)",
-          ['[{"type":"CredditToppedUp","data":{"amount":100}},{"type":"CredditToppedUp","data":{"amount":50}}]']
-        ]
-      )
+      repository = Minitest::Mock.new
+      events = [Event.new(type: "CredditToppedUp", data: {amount: 100})]
+      repository.expect(:append, nil, [events])
 
-      event_store = EventStore.new(connection)
-      event_store.append(
-        [
-          Event.new(type: "CredditToppedUp", data: {amount: 100}),
-          Event.new(type: "CredditToppedUp", data: {amount: 50})
-        ]
-      )
+      EventStore.new(repository).append(events)
 
-      connection.verify
+      repository.verify
     end
 
     def test_read_events
-      connection = Minitest::Mock.new
-      connection.expect(
-        :exec_params,
-        [
-          {"type" => "CredditToppedUp", "data" => '{"amount":100}'},
-          {"type" => "CredditToppedUp", "data" => '{"amount":50}'}
-        ],
-        ["SELECT type, data FROM read_events()", []]
-      )
+      repository = Minitest::Mock.new
+      events = [Event.new(type: "CredditToppedUp", data: {"amount" => 100})]
+      repository.expect(:read, events)
 
-      event_store = EventStore.new(connection)
-
-      assert_equal(
-        [
-          En57::Event.new(type: "CredditToppedUp", data: {"amount" => 100}),
-          En57::Event.new(type: "CredditToppedUp", data: {"amount" => 50})
-        ],
-        event_store.read
-      )
-      connection.verify
+      assert_equal(events, EventStore.new(repository).read)
+      repository.verify
     end
   end
 end

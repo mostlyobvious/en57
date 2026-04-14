@@ -1,9 +1,9 @@
-# Generated from lib/en57/event_store.rb with RBS::Inline
+# Generated from lib/en57/pg_repository.rb with RBS::Inline
 
 module En57
-  class EventStore
-    # : (untyped repository) -> void
-    def initialize: (untyped repository) -> void
+  class PgRepository
+    # : (untyped connection) -> void
+    def initialize: (untyped connection) -> void
 
     # : (Array[_Event] events) -> void
     def append: (Array[_Event] events) -> void
