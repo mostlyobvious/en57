@@ -2,6 +2,8 @@ usage: opensource
 includes:
 - lib
 - test
+requires:
+- en57
 integration:
   name: minitest
 matcher:
