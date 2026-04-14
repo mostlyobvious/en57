@@ -10,8 +10,6 @@ Random list of ideas, but not rules. These give some hint about the direction, b
 
 * only newest released Ruby version, no backwards compatibility
 
-* 100% mutation coverage with `mutant`
-
 * Ruby code formatting and linting with `standard`
 
 * depend on last released PostgreSQL version, no backwards compatibility
