@@ -12,19 +12,17 @@ class TestEventStore < Minitest::Test
     connection.expect(
       :exec_params,
       nil,
-      ["INSERT INTO events (type, data) VALUES ($1, $2)", ["CredditToppedUp", '{"amount":100}']]
-    )
-    connection.expect(
-      :exec_params,
-      nil,
-      ["INSERT INTO events (type, data) VALUES ($1, $2)", ["CredditToppedUp", '{"amount":50}']]
+      [
+        "INSERT INTO events (type, data) VALUES ($1, $2), ($3, $4)",
+        %w[CredditToppedUp {"amount":100} CredditToppedUp {"amount":50}]
+      ]
     )
 
     event_store = En57::EventStore.new(connection)
     event_store.append(
       [
-        Event.new(type: "CredditToppedUp", data: {amount: 100}),
-        Event.new(type: "CredditToppedUp", data: {amount: 50})
+        Event.new(type: "CredditToppedUp", data: { amount: 100 }),
+        Event.new(type: "CredditToppedUp", data: { amount: 50 })
       ]
     )
 
