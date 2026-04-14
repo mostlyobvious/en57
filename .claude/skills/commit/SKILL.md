@@ -14,7 +14,8 @@ description: Create a git commit following project conventions. Use this skill w
 ```
 
 - Subject: gitmoji + space + capitalized imperative ("Fix bug", not "Fixed"). No trailing period.
-- Blank line between subject and body. Body wrapped at 72 cols; paragraphs separated by blank lines; `-`/`*` bullets with hanging indent.
+- Blank line between subject and body. Body wrapped at 72 cols.
+- Prefer `-` bullet points in the body over prose paragraphs. Hanging indent for wrapped lines.
 - Body explains **why** (and, when non-obvious, **how** and **what effects** — benchmarks, side effects, follow-ups). Skip questions that don't apply. Never restate the diff.
 
 ## Gitmoji
