@@ -14,8 +14,8 @@ module En57
         :exec_params,
         nil,
         [
-          "INSERT INTO events (type, data) VALUES ($1, $2), ($3, $4)",
-          %w[CredditToppedUp {"amount":100} CredditToppedUp {"amount":50}]
+          "SELECT append_events($1)",
+          ['[{"type":"CredditToppedUp","data":{"amount":100}},{"type":"CredditToppedUp","data":{"amount":50}}]']
         ]
       )
 

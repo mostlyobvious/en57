@@ -13,12 +13,8 @@ module En57
 
     #: (Array[_Event] events) -> void
     def append(events)
-      placeholders = events.each_index.map { |i| "($#{i * 2 + 1}, $#{i * 2 + 2})" }.join(", ")
-      params = events.flat_map { |event| [event.type, JSON.generate(event.data)] }
-      @connection.exec_params(
-        "INSERT INTO events (type, data) VALUES #{placeholders}",
-        params
-      )
+      payload = events.map { |event| {type: event.type, data: event.data} }
+      @connection.exec_params("SELECT append_events($1)", [JSON.generate(payload)])
     end
 
     #: () -> Array[Event]
