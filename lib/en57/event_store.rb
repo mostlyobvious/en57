@@ -8,11 +8,13 @@ module En57
       @connection = connection
     end
 
-    def append(event)
-      @connection.exec_params(
-        "INSERT INTO events (type, data) VALUES ($1, $2)",
-        [event.type, JSON.generate(event.data)]
-      )
+    def append(events)
+      events.each do |event|
+        @connection.exec_params(
+          "INSERT INTO events (type, data) VALUES ($1, $2)",
+          [event.type, JSON.generate(event.data)]
+        )
+      end
     end
   end
 end
