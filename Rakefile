@@ -19,8 +19,8 @@ task :mutate do
   system("bin/mutant run")
 end
 
-task :mutate_since_head do
-  system("bin/mutant run --since HEAD")
+task :mutate_since do
+  system("bin/mutant run --since #{ENV.fetch("MUTANT_SINCE", "HEAD")}")
 end
 
-task default: %i[test mutate_since_head standard]
+task default: %i[test mutate_since standard]
