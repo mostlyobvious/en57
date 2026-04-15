@@ -10,7 +10,7 @@ task :mutate do
 end
 
 task :mutate_since do
-  system("bin/mutant run --since #{ENV.fetch("MUTANT_SINCE", "HEAD")}")
+  system("bin/mutant run --since #{ENV.fetch("MUTANT_SINCE")}")
 end
 
 task default: %i[test mutate_since]
