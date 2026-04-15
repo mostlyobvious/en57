@@ -14,15 +14,28 @@ module En57
     def append(events)
       record_encoder = PG::TextEncoder::Record.new
       array_encoder = PG::TextEncoder::Array.new
-      records = events.map { |event| record_encoder.encode([event.type, @serializer.dump(event.data).first]) }
-      @connection.exec_params("SELECT append_events($1::event[])", [array_encoder.encode(records)])
+      records =
+        events.map do |event|
+          record_encoder.encode(
+            [event.type, @serializer.dump(event.data).first],
+          )
+        end
+      @connection.exec_params(
+        "SELECT append_events($1::event[])",
+        [array_encoder.encode(records)],
+      )
     end
 
     #: () -> Array[Event]
     def read
-      @connection.exec_params("SELECT type, data FROM read_events()", []).map do |row|
-        Event.new(type: row.fetch("type"), data: @serializer.load(row.fetch("data"), nil))
-      end
+      @connection
+        .exec_params("SELECT type, data FROM read_events()", [])
+        .map do |row|
+          Event.new(
+            type: row.fetch("type"),
+            data: @serializer.load(row.fetch("data"), nil),
+          )
+        end
     end
   end
 end

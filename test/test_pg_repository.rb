@@ -8,25 +8,26 @@ module En57
 
     def test_append_event
       record_encoder = PG::TextEncoder::Record.new
-      expected_array = PG::TextEncoder::Array.new.encode(
-        [
-          record_encoder.encode(["CredditToppedUp", '{"amount":100}']),
-          record_encoder.encode(["CredditToppedUp", '{"amount":50}'])
-        ]
-      )
+      expected_array =
+        PG::TextEncoder::Array.new.encode(
+          [
+            record_encoder.encode(%w[CredditToppedUp {"amount":100}]),
+            record_encoder.encode(%w[CredditToppedUp {"amount":50}]),
+          ],
+        )
       connection = Minitest::Mock.new
       connection.expect(
         :exec_params,
         nil,
-        ["SELECT append_events($1::event[])", [expected_array]]
+        ["SELECT append_events($1::event[])", [expected_array]],
       )
 
       repository = PgRepository.new(connection, JsonSerializer.new)
       repository.append(
         [
-          Event.new(type: "CredditToppedUp", data: {amount: 100}),
-          Event.new(type: "CredditToppedUp", data: {amount: 50})
-        ]
+          Event.new(type: "CredditToppedUp", data: { amount: 100 }),
+          Event.new(type: "CredditToppedUp", data: { amount: 50 }),
+        ],
       )
 
       connection.verify
@@ -37,20 +38,20 @@ module En57
       connection.expect(
         :exec_params,
         [
-          {"type" => "CredditToppedUp", "data" => '{"amount":100}'},
-          {"type" => "CredditToppedUp", "data" => '{"amount":50}'}
+          { "type" => "CredditToppedUp", "data" => '{"amount":100}' },
+          { "type" => "CredditToppedUp", "data" => '{"amount":50}' },
         ],
-        ["SELECT type, data FROM read_events()", []]
+        ["SELECT type, data FROM read_events()", []],
       )
 
       repository = PgRepository.new(connection, JsonSerializer.new)
 
       assert_equal(
         [
-          Event.new(type: "CredditToppedUp", data: {"amount" => 100}),
-          Event.new(type: "CredditToppedUp", data: {"amount" => 50})
+          Event.new(type: "CredditToppedUp", data: { "amount" => 100 }),
+          Event.new(type: "CredditToppedUp", data: { "amount" => 50 }),
         ],
-        repository.read
+        repository.read,
       )
       connection.verify
     end

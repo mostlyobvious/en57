@@ -9,7 +9,7 @@ module En57
     def serializer = JsonSerializer.new
 
     {
-      "string_key" => [{"amount" => 100}, %({"amount":100}), {}]
+      "string_key" => [{ "amount" => 100 }, %({"amount":100}), {}],
     }.each do |name, (original, serialized, description)|
       define_method("test_dump_#{name}") do
         assert_equal [serialized, description], serializer.dump(original)

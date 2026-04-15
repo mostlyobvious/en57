@@ -6,10 +6,12 @@ require "pg"
 module En57
   class TestIntegration < Minitest::Test
     def setup
-      @connection = PG.connect(ENV.fetch("DATABASE_URL", "postgres:///en57_test"))
+      @connection =
+        PG.connect(ENV.fetch("DATABASE_URL", "postgres:///en57_test"))
       @connection.exec(File.read(File.expand_path("../db/schema.sql", __dir__)))
       @connection.exec("TRUNCATE events")
-      @event_store = EventStore.new(PgRepository.new(@connection, JsonSerializer.new))
+      @event_store =
+        EventStore.new(PgRepository.new(@connection, JsonSerializer.new))
     end
 
     def teardown
@@ -19,17 +21,17 @@ module En57
     def test_happy_path
       @event_store.append(
         [
-          Event.new(type: "CredditToppedUp", data: {amount: 100}),
-          Event.new(type: "CredditToppedUp", data: {amount: 50})
-        ]
+          Event.new(type: "CredditToppedUp", data: { amount: 100 }),
+          Event.new(type: "CredditToppedUp", data: { amount: 50 }),
+        ],
       )
 
       assert_equal(
         [
-          Event.new(type: "CredditToppedUp", data: {"amount" => 100}),
-          Event.new(type: "CredditToppedUp", data: {"amount" => 50})
+          Event.new(type: "CredditToppedUp", data: { "amount" => 100 }),
+          Event.new(type: "CredditToppedUp", data: { "amount" => 50 }),
         ],
-        @event_store.read
+        @event_store.read,
       )
     end
   end

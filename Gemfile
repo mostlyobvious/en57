@@ -8,7 +8,7 @@ gem "irb"
 gem "rake"
 gem "minitest"
 gem "minitest-mock"
-gem "standard"
+gem "syntax_tree"
 gem "mutant-minitest"
 gem "rbs"
 gem "rbs-inline", require: false
