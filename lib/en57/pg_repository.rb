@@ -15,7 +15,7 @@ module En57
       record_encoder = PG::TextEncoder::Record.new
       array_encoder = PG::TextEncoder::Array.new
       records = events.map { |event| record_encoder.encode([event.type, @serializer.dump(event.data)]) }
-      @connection.exec_params("SELECT append_events($1::event_input[])", [array_encoder.encode(records)])
+      @connection.exec_params("SELECT append_events($1::event[])", [array_encoder.encode(records)])
     end
 
     #: () -> Array[Event]

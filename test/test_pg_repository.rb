@@ -18,7 +18,7 @@ module En57
       connection.expect(
         :exec_params,
         nil,
-        ["SELECT append_events($1::event_input[])", [expected_array]]
+        ["SELECT append_events($1::event[])", [expected_array]]
       )
 
       repository = PgRepository.new(connection, JsonSerializer.new)
