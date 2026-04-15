@@ -5,14 +5,6 @@ require "minitest/test_task"
 
 Minitest::TestTask.create
 
-namespace :rbs do
-  task :generate do
-    system("bin/rbs-inline --output=sig/ lib/")
-  end
-end
-
-task test: "rbs:generate"
-
 task :mutate do
   system("bin/mutant run")
 end
