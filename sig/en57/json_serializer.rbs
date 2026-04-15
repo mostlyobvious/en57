@@ -2,16 +2,16 @@
 
 module En57
   interface _Serializer
-    def dump: (untyped) -> String
+    def dump: (untyped) -> [ String, untyped ]
 
-    def load: (String) -> untyped
+    def load: (String, untyped) -> untyped
   end
 
   class JsonSerializer
-    # : (untyped payload) -> String
-    def dump: (untyped payload) -> String
+    # : (untyped payload) -> [String, untyped]
+    def dump: (untyped payload) -> [ String, untyped ]
 
-    # : (String string) -> untyped
-    def load: (String string) -> untyped
+    # : (String string, untyped description) -> untyped
+    def load: (String string, untyped description) -> untyped
   end
 end

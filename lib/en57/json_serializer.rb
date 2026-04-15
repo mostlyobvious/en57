@@ -7,18 +7,18 @@ require "json"
 module En57
   # @rbs!
   #   interface _Serializer
-  #     def dump: (untyped) -> String
-  #     def load: (String) -> untyped
+  #     def dump: (untyped) -> [String, untyped]
+  #     def load: (String, untyped) -> untyped
   #   end
 
   class JsonSerializer
-    #: (untyped payload) -> String
+    #: (untyped payload) -> [String, untyped]
     def dump(payload)
-      JSON.generate(payload)
+      [JSON.generate(payload), {}]
     end
 
-    #: (String string) -> untyped
-    def load(string)
+    #: (String string, untyped description) -> untyped
+    def load(string, description)
       JSON.parse(string)
     end
   end
