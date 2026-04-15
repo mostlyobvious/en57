@@ -1,3 +1,5 @@
+SET client_min_messages = warning;
+
 CREATE TABLE IF NOT EXISTS events (
     type TEXT NOT NULL,
     data jsonb NOT NULL,
