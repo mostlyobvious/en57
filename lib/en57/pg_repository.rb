@@ -12,8 +12,10 @@ module En57
 
     #: (Array[_Event] events) -> void
     def append(events)
-      payload = events.map { |event| {type: event.type, data: event.data} }
-      @connection.exec_params("SELECT append_events($1)", [@serializer.dump(payload)])
+      record_encoder = PG::TextEncoder::Record.new
+      array_encoder = PG::TextEncoder::Array.new
+      records = events.map { |event| record_encoder.encode([event.type, @serializer.dump(event.data)]) }
+      @connection.exec_params("SELECT append_events($1::event_input[])", [array_encoder.encode(records)])
     end
 
     #: () -> Array[Event]

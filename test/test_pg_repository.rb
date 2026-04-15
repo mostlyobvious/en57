@@ -7,14 +7,18 @@ module En57
     cover PgRepository
 
     def test_append_event
+      record_encoder = PG::TextEncoder::Record.new
+      expected_array = PG::TextEncoder::Array.new.encode(
+        [
+          record_encoder.encode(["CredditToppedUp", '{"amount":100}']),
+          record_encoder.encode(["CredditToppedUp", '{"amount":50}'])
+        ]
+      )
       connection = Minitest::Mock.new
       connection.expect(
         :exec_params,
         nil,
-        [
-          "SELECT append_events($1)",
-          ['[{"type":"CredditToppedUp","data":{"amount":100}},{"type":"CredditToppedUp","data":{"amount":50}}]']
-        ]
+        ["SELECT append_events($1::event_input[])", [expected_array]]
       )
 
       repository = PgRepository.new(connection, JsonSerializer.new)
