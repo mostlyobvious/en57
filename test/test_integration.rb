@@ -22,13 +22,13 @@ module En57
       @event_store.append(
         [
           Event.new(type: "CredditToppedUp", data: { amount: 100 }),
-          Event.new(type: "CredditToppedUp", data: { amount: 50 }),
+          Event.new(type: "CredditToppedUp", data: { "amount" => 50 }),
         ],
       )
 
       assert_equal(
         [
-          Event.new(type: "CredditToppedUp", data: { "amount" => 100 }),
+          Event.new(type: "CredditToppedUp", data: { amount: 100 }),
           Event.new(type: "CredditToppedUp", data: { "amount" => 50 }),
         ],
         @event_store.read,

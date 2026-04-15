@@ -11,8 +11,12 @@ module En57
       expected_array =
         PG::TextEncoder::Array.new.encode(
           [
-            record_encoder.encode(%w[CredditToppedUp {"amount":100}]),
-            record_encoder.encode(%w[CredditToppedUp {"amount":50}]),
+            record_encoder.encode(
+              %w[CredditToppedUp {"amount":100} {"keys":{"amount":"Symbol"}}],
+            ),
+            record_encoder.encode(
+              %w[CredditToppedUp {"amount":50} {"keys":{"amount":"Symbol"}}],
+            ),
           ],
         )
       connection = Minitest::Mock.new
@@ -38,10 +42,18 @@ module En57
       connection.expect(
         :exec_params,
         [
-          { "type" => "CredditToppedUp", "data" => '{"amount":100}' },
-          { "type" => "CredditToppedUp", "data" => '{"amount":50}' },
+          {
+            "type" => "CredditToppedUp",
+            "data" => '{"amount":100}',
+            "metadata" => '{"keys":{"amount":"String"}}',
+          },
+          {
+            "type" => "CredditToppedUp",
+            "data" => '{"amount":50}',
+            "metadata" => '{"keys":{"amount":"String"}}',
+          },
         ],
-        ["SELECT type, data FROM read_events()", []],
+        ["SELECT type, data, metadata FROM read_events()", []],
       )
 
       repository = PgRepository.new(connection, JsonSerializer.new)
