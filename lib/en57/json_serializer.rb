@@ -7,8 +7,7 @@ require "time"
 module En57
   class JsonSerializer
     IDENTITY = lambda { it }
-    KeyType = Data.define(:klass, :load)
-    ValueType = Data.define(:klass, :dump, :load)
+    Type = Data.define(:klass, :dump, :load)
 
     class Registry
       def initialize
@@ -27,18 +26,14 @@ module En57
     end
 
     def initialize
-      @key_types = Registry.new
+      @types = Registry.new
       [
-        KeyType.new(Symbol, lambda { it.to_sym }),
-        KeyType.new(String, IDENTITY),
-      ].each { @key_types.register(it) }
-
-      @value_types = Registry.new
-      [
-        ValueType.new(Date, IDENTITY, lambda { Date.iso8601(it) }),
-        ValueType.new(Time, lambda { it.iso8601 }, lambda { Time.iso8601(it) }),
+        Type.new(String, IDENTITY, IDENTITY),
+        Type.new(Symbol, IDENTITY, lambda { it.to_sym }),
+        Type.new(Date, IDENTITY, lambda { Date.iso8601(it) }),
+        Type.new(Time, lambda { it.iso8601 }, lambda { Time.iso8601(it) }),
         *optional_big_decimal_type,
-      ].each { @value_types.register(it) }
+      ].each { @types.register(it) }
     end
 
     def dump(payload)
@@ -46,13 +41,15 @@ module En57
       value_meta = {}
       serialized =
         payload.to_h do |k, v|
-          key_meta[k] = @key_types.for_class(k.class).klass
-          vtype = @value_types.for_class(v.class)
+          ktype = @types.for_class(k.class)
+          dumped_key = ktype.dump.call(k)
+          key_meta[dumped_key] = ktype.klass
+          vtype = @types.for_class(v.class)
           if vtype
-            value_meta[k] = vtype.klass
-            [k, vtype.dump.call(v)]
+            value_meta[dumped_key] = vtype.klass
+            [dumped_key, vtype.dump.call(v)]
           else
-            [k, v]
+            [dumped_key, v]
           end
         end
       metadata = { "keys" => key_meta }
@@ -67,9 +64,9 @@ module En57
       JSON
         .parse(string)
         .to_h do |k, v|
-          new_key = @key_types.by_name(keys.fetch(k)).load.call(k)
+          new_key = @types.by_name(keys.fetch(k)).load.call(k)
           vname = values[k]
-          new_val = vname ? @value_types.by_name(vname).load.call(v) : v
+          new_val = vname ? @types.by_name(vname).load.call(v) : v
           [new_key, new_val]
         end
     end
@@ -78,13 +75,7 @@ module En57
 
     def optional_big_decimal_type
       return [] unless defined?(BigDecimal)
-      [
-        ValueType.new(
-          BigDecimal,
-          lambda { it.to_s("F") },
-          lambda { BigDecimal(it) },
-        ),
-      ]
+      [Type.new(BigDecimal, lambda { it.to_s("F") }, lambda { BigDecimal(it) })]
     end
   end
 end

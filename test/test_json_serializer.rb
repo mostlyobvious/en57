@@ -4,6 +4,7 @@ require "test_helper"
 require "date"
 require "time"
 require "bigdecimal"
+require "json"
 
 module En57
   class TestJsonSerializer < Minitest::Test
@@ -11,40 +12,50 @@ module En57
 
     def serializer = JsonSerializer.new
 
-    {
-      "string_key" => [
-        { "amount" => 100 },
-        %({"amount":100}),
-        %({"keys":{"amount":"String"}}),
-      ],
-      "symbol_key" => [
-        { amount: 100 },
-        %({"amount":100}),
-        %({"keys":{"amount":"Symbol"}}),
-      ],
-      "date_value" => [
-        { "d" => Date.new(2024, 1, 1) },
-        %({"d":"2024-01-01"}),
-        %({"keys":{"d":"String"},"values":{"d":"Date"}}),
-      ],
-      "time_value" => [
-        { "t" => Time.utc(2024, 1, 1, 12, 0, 0) },
-        %({"t":"2024-01-01T12:00:00Z"}),
-        %({"keys":{"t":"String"},"values":{"t":"Time"}}),
-      ],
-      "big_decimal_value" => [
-        { "b" => BigDecimal("1.5") },
-        %({"b":"1.5"}),
-        %({"keys":{"b":"String"},"values":{"b":"BigDecimal"}}),
-      ],
-    }.each do |name, (original, serialized, description)|
-      define_method("test_dump_#{name}") do
-        assert_equal [serialized, description], serializer.dump(original)
-      end
+    EXAMPLES = [
+      %w[string str str String],
+      ["symbol", :sym, "sym", "Symbol"],
+      ["date", Date.new(2024, 1, 1), "2024-01-01", "Date"],
+      ["time", Time.utc(2024, 1, 1, 12, 0, 0), "2024-01-01T12:00:00Z", "Time"],
+      ["big_decimal", BigDecimal("1.5"), "1.5", "BigDecimal"],
+    ].freeze
 
-      define_method("test_load_#{name}") do
-        assert_equal original, serializer.load(serialized, description)
+    EXAMPLES.each do |key_name, key_obj, key_dumped, key_klass|
+      EXAMPLES.each do |value_name, value_obj, value_dumped, value_klass|
+        payload = { key_obj => value_obj }
+        serialized = JSON.generate({ key_dumped => value_dumped })
+        description_json =
+          JSON.generate(
+            "keys" => {
+              key_dumped => key_klass,
+            },
+            "values" => {
+              key_dumped => value_klass,
+            },
+          )
+
+        define_method("test_dump_#{key_name}_key_#{value_name}_value") do
+          assert_equal [serialized, description_json], serializer.dump(payload)
+        end
+
+        define_method("test_load_#{key_name}_key_#{value_name}_value") do
+          assert_equal payload, serializer.load(serialized, description_json)
+        end
       end
+    end
+
+    def test_dump_passes_unregistered_value_through
+      assert_equal(
+        %w[{"amount":100} {"keys":{"amount":"String"}}],
+        serializer.dump({ "amount" => 100 }),
+      )
+    end
+
+    def test_load_passes_unregistered_value_through
+      assert_equal(
+        { "amount" => 100 },
+        serializer.load(%({"amount":100}), %({"keys":{"amount":"String"}})),
+      )
     end
   end
 end
