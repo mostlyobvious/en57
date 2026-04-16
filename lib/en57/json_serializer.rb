@@ -28,7 +28,6 @@ module En57
     def initialize
       @types = Registry.new
       [
-        Type.new(String, IDENTITY, IDENTITY),
         Type.new(Symbol, IDENTITY, lambda { it.to_sym }),
         Type.new(Date, IDENTITY, lambda { Date.iso8601(it) }),
         Type.new(Time, lambda { it.iso8601 }, lambda { Time.iso8601(it) }),
@@ -42,8 +41,12 @@ module En57
       serialized =
         payload.to_h do |k, v|
           ktype = @types.for_class(k.class)
-          dumped_key = ktype.dump.call(k)
-          key_meta[dumped_key] = ktype.klass
+          if ktype
+            dumped_key = ktype.dump.call(k)
+            key_meta[dumped_key] = ktype.klass
+          else
+            dumped_key = k
+          end
           vtype = @types.for_class(v.class)
           if vtype
             value_meta[dumped_key] = vtype.klass
@@ -52,19 +55,21 @@ module En57
             [dumped_key, v]
           end
         end
-      metadata = { "keys" => key_meta }
+      metadata = {}
+      metadata["keys"] = key_meta unless key_meta.empty?
       metadata["values"] = value_meta unless value_meta.empty?
       [JSON.generate(serialized), JSON.generate(metadata)]
     end
 
     def load(string, description)
       desc = JSON.parse(description)
-      keys = desc.fetch("keys")
+      keys = desc["keys"] || {}
       values = desc["values"] || {}
       JSON
         .parse(string)
         .to_h do |k, v|
-          new_key = @types.by_name(keys.fetch(k)).load.call(k)
+          kname = keys[k]
+          new_key = kname ? @types.by_name(kname).load.call(k) : k
           vname = values[k]
           new_val = vname ? @types.by_name(vname).load.call(v) : v
           [new_key, new_val]

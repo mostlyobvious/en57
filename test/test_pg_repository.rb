@@ -45,12 +45,12 @@ module En57
           {
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
-            "metadata" => '{"keys":{"amount":"String"}}',
+            "metadata" => "{}",
           },
           {
             "type" => "CredditToppedUp",
             "data" => '{"amount":50}',
-            "metadata" => '{"keys":{"amount":"String"}}',
+            "metadata" => "{}",
           },
         ],
         ["SELECT type, data, metadata FROM read_events()", []],

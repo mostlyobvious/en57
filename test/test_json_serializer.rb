@@ -24,15 +24,13 @@ module En57
       EXAMPLES.each do |value_name, value_obj, value_dumped, value_klass|
         payload = { key_obj => value_obj }
         serialized = JSON.generate({ key_dumped => value_dumped })
-        description_json =
-          JSON.generate(
-            "keys" => {
-              key_dumped => key_klass,
-            },
-            "values" => {
-              key_dumped => value_klass,
-            },
-          )
+        description = {}
+        description["keys"] = { key_dumped => key_klass } unless key_klass ==
+          "String"
+        description["values"] = {
+          key_dumped => value_klass,
+        } unless value_klass == "String"
+        description_json = JSON.generate(description)
 
         define_method("test_dump_#{key_name}_key_#{value_name}_value") do
           assert_equal [serialized, description_json], serializer.dump(payload)
@@ -45,16 +43,13 @@ module En57
     end
 
     def test_dump_passes_unregistered_value_through
-      assert_equal(
-        %w[{"amount":100} {"keys":{"amount":"String"}}],
-        serializer.dump({ "amount" => 100 }),
-      )
+      assert_equal(%w[{"amount":100} {}], serializer.dump({ "amount" => 100 }))
     end
 
     def test_load_passes_unregistered_value_through
       assert_equal(
         { "amount" => 100 },
-        serializer.load(%({"amount":100}), %({"keys":{"amount":"String"}})),
+        serializer.load(%({"amount":100}), "{}"),
       )
     end
   end
