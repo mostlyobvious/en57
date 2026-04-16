@@ -37,7 +37,13 @@ module En57
         @key_types.register(type)
         @value_types.register(type)
       end
-      @key_types.register(Type.new(Integer, IDENTITY, lambda { Integer(it) }))
+      [
+        Type.new(Integer, IDENTITY, lambda { Integer(it) }),
+        Type.new(Float, IDENTITY, lambda { Float(it) }),
+        Type.new(TrueClass, IDENTITY, lambda { |_| true }),
+        Type.new(FalseClass, IDENTITY, lambda { |_| false }),
+        Type.new(NilClass, IDENTITY, lambda { |_| }),
+      ].each { @key_types.register(it) }
     end
 
     def dump(payload)

@@ -19,9 +19,20 @@ module En57
       ["time", Time.utc(2024, 1, 1, 12, 0, 0), "2024-01-01T12:00:00Z", "Time"],
       ["big_decimal", BigDecimal("1.5"), "1.5", "BigDecimal"],
       ["integer", 100, 100, "Integer"],
+      ["float", 1.5, 1.5, "Float"],
+      ["true", true, true, "TrueClass"],
+      ["false", false, false, "FalseClass"],
+      ["nil", nil, nil, "NilClass"],
     ].freeze
 
-    NATIVE_VALUES = %w[String Integer].freeze
+    NATIVE_VALUES = %w[
+      String
+      Integer
+      Float
+      TrueClass
+      FalseClass
+      NilClass
+    ].freeze
 
     EXAMPLES.each do |key_name, key_obj, key_dumped, key_klass|
       EXAMPLES.each do |value_name, value_obj, value_dumped, value_klass|
