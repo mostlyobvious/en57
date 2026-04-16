@@ -26,13 +26,18 @@ module En57
     end
 
     def initialize
-      @types = Registry.new
+      @key_types = Registry.new
+      @value_types = Registry.new
       [
         Type.new(Symbol, IDENTITY, lambda { it.to_sym }),
         Type.new(Date, IDENTITY, lambda { Date.iso8601(it) }),
         Type.new(Time, lambda { it.iso8601 }, lambda { Time.iso8601(it) }),
         *optional_big_decimal_type,
-      ].each { @types.register(it) }
+      ].each do |type|
+        @key_types.register(type)
+        @value_types.register(type)
+      end
+      @key_types.register(Type.new(Integer, IDENTITY, lambda { Integer(it) }))
     end
 
     def dump(payload)
@@ -40,14 +45,14 @@ module En57
       value_meta = {}
       serialized =
         payload.to_h do |k, v|
-          ktype = @types.for_class(k.class)
+          ktype = @key_types.for_class(k.class)
           if ktype
             dumped_key = ktype.dump.call(k)
             key_meta[dumped_key] = ktype.klass
           else
             dumped_key = k
           end
-          vtype = @types.for_class(v.class)
+          vtype = @value_types.for_class(v.class)
           if vtype
             value_meta[dumped_key] = vtype.klass
             [dumped_key, vtype.dump.call(v)]
@@ -69,9 +74,9 @@ module En57
         .parse(string)
         .to_h do |k, v|
           kname = keys[k]
-          new_key = kname ? @types.by_name(kname).load.call(k) : k
+          new_key = kname ? @key_types.by_name(kname).load.call(k) : k
           vname = values[k]
-          new_val = vname ? @types.by_name(vname).load.call(v) : v
+          new_val = vname ? @value_types.by_name(vname).load.call(v) : v
           [new_key, new_val]
         end
     end
