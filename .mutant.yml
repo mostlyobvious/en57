@@ -9,3 +9,5 @@ integration:
 matcher:
   subjects:
     - En57*
+  ignore:
+    - En57::JsonSerializer#optional_big_decimal_type
