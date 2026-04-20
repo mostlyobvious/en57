@@ -3,7 +3,7 @@ SET client_min_messages = warning;
 CREATE TABLE IF NOT EXISTS events (
     type TEXT NOT NULL,
     data jsonb NOT NULL,
-    metadata jsonb NOT NULL
+    meta jsonb NOT NULL
 );
 
 DO $$
@@ -11,7 +11,7 @@ BEGIN
     CREATE TYPE event AS (
         type TEXT,
         data jsonb,
-        metadata jsonb
+        meta jsonb
 );
 EXCEPTION
     WHEN duplicate_object THEN
@@ -23,11 +23,11 @@ CREATE OR REPLACE FUNCTION append_events (new_events event[])
     RETURNS void
     LANGUAGE SQL
     AS $$
-    INSERT INTO events (type, data, metadata)
+    INSERT INTO events (type, data, meta)
     SELECT
         e.type,
         e.data,
-        e.metadata
+        e.meta
     FROM
         unnest(new_events) AS e;
 $$;
@@ -39,7 +39,7 @@ CREATE OR REPLACE FUNCTION read_events ()
     SELECT
         type,
         data,
-        metadata
+        meta
     FROM
         events;
 $$;

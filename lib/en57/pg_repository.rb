@@ -26,11 +26,11 @@ module En57
 
     def read
       @connection
-        .exec_params("SELECT type, data, metadata FROM read_events()", [])
+        .exec_params("SELECT type, data, meta FROM read_events()", [])
         .map do |row|
           Event.new(
             type: row.fetch("type"),
-            data: @serializer.load(row.fetch("data"), row.fetch("metadata")),
+            data: @serializer.load(row.fetch("data"), row.fetch("meta")),
           )
         end
     end

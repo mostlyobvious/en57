@@ -45,15 +45,15 @@ module En57
           {
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
-            "metadata" => "{}",
+            "meta" => "{}",
           },
           {
             "type" => "CredditToppedUp",
             "data" => '{"amount":50}',
-            "metadata" => "{}",
+            "meta" => "{}",
           },
         ],
-        ["SELECT type, data, metadata FROM read_events()", []],
+        ["SELECT type, data, meta FROM read_events()", []],
       )
 
       repository = PgRepository.new(connection, JsonSerializer.new)
