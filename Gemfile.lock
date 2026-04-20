@@ -43,11 +43,14 @@ GEM
       racc
     pg (1.6.3)
     pg (1.6.3-aarch64-linux)
-    pg (1.6.3-aarch64-linux-musl)
     pg (1.6.3-arm64-darwin)
-    pg (1.6.3-x86_64-darwin)
     pg (1.6.3-x86_64-linux)
-    pg (1.6.3-x86_64-linux-musl)
+    pg-ephemeral (0.3.0-aarch64-linux)
+      pg (~> 1.5)
+    pg-ephemeral (0.3.0-arm64-darwin)
+      pg (~> 1.5)
+    pg-ephemeral (0.3.0-x86_64-linux)
+      pg (~> 1.5)
     pp (0.6.3)
       prettyprint
     prettier_print (1.2.1)
@@ -78,12 +81,8 @@ GEM
 
 PLATFORMS
   aarch64-linux
-  aarch64-linux-musl
   arm64-darwin
-  ruby
-  x86_64-darwin
   x86_64-linux
-  x86_64-linux-musl
 
 DEPENDENCIES
   bigdecimal
@@ -93,6 +92,7 @@ DEPENDENCIES
   minitest
   minitest-mock
   mutant-minitest
+  pg-ephemeral
   rake
   syntax_tree
 
@@ -115,11 +115,11 @@ CHECKSUMS
   parser (3.3.11.1) sha256=d17ace7aabe3e72c3cc94043714be27cc6f852f104d81aa284c2281aecc65d54
   pg (1.6.3) sha256=1388d0563e13d2758c1089e35e973a3249e955c659592d10e5b77c468f628a99
   pg (1.6.3-aarch64-linux) sha256=0698ad563e02383c27510b76bf7d4cd2de19cd1d16a5013f375dd473e4be72ea
-  pg (1.6.3-aarch64-linux-musl) sha256=06a75f4ea04b05140146f2a10550b8e0d9f006a79cdaf8b5b130cde40e3ecc2c
   pg (1.6.3-arm64-darwin) sha256=7240330b572e6355d7c75a7de535edb5dfcbd6295d9c7777df4d9dddfb8c0e5f
-  pg (1.6.3-x86_64-darwin) sha256=ee2e04a17c0627225054ffeb43e31a95be9d7e93abda2737ea3ce4a62f2729d6
   pg (1.6.3-x86_64-linux) sha256=5d9e188c8f7a0295d162b7b88a768d8452a899977d44f3274d1946d67920ae8d
-  pg (1.6.3-x86_64-linux-musl) sha256=9c9c90d98c72f78eb04c0f55e9618fe55d1512128e411035fe229ff427864009
+  pg-ephemeral (0.3.0-aarch64-linux) sha256=44708e637dd177307b2397101da8060f1d16057eda7ca96c0317e6c0bbbf0d33
+  pg-ephemeral (0.3.0-arm64-darwin) sha256=6872b688221887a1c94c1e7f382d73876c391386bf7e4ba3489aafd69e4ca0d3
+  pg-ephemeral (0.3.0-x86_64-linux) sha256=25e92ef92e41b9962dc09253cb7fdc1bc03f9d90c548929b8a26de37d9fa8b38
   pp (0.6.3) sha256=2951d514450b93ccfeb1df7d021cae0da16e0a7f95ee1e2273719669d0ab9df6
   prettier_print (1.2.1) sha256=a72838b5f23facff21f90a5423cdcdda19e4271092b41f4ea7f50b83929e6ff9
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
