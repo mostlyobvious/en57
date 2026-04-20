@@ -6,10 +6,8 @@ require "pg_ephemeral"
 
 module En57
   class TestIntegration < Minitest::Test
-    DATABASE_CONFIG = File.expand_path("../database.toml", __dir__)
-
     def test_happy_path
-      PgEphemeral.with_connection(config: DATABASE_CONFIG) do |connection|
+      PgEphemeral.with_connection do |connection|
         event_store =
           EventStore.new(PgRepository.new(connection, JsonSerializer.new))
 
