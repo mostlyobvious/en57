@@ -37,8 +37,8 @@ module En57
     ].map { example.new(*it) }
       .permutation(2) do |k, v|
         meta = Hash.new { |h, k| h[k] = {} }
-        meta["keys"][k.serialized] = k.klass unless String === k.value
-        meta["values"][k.serialized] = v.klass unless v.json_native?
+        meta[k.serialized]["k"] = k.klass unless String === k.value
+        meta[k.serialized]["v"] = v.klass unless v.json_native?
 
         payload = { k.value => v.value }
         serialized = JSON.dump(k.serialized => v.serialized)

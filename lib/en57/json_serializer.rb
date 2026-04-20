@@ -47,41 +47,29 @@ module En57
     end
 
     def dump(payload)
-      key_meta = {}
-      value_meta = {}
+      metadata = Hash.new { |h, k| h[k] = {} }
       serialized =
         payload.to_h do |k, v|
           ktype = @key_types.for_class(k.class)
-          if ktype
-            dumped_key = ktype.dump.call(k)
-            key_meta[dumped_key] = ktype.klass
-          else
-            dumped_key = k
-          end
+          dumped_key = ktype ? ktype.dump.call(k) : k
+          metadata[dumped_key]["k"] = ktype.klass if ktype
           vtype = @value_types.for_class(v.class)
-          if vtype
-            value_meta[dumped_key] = vtype.klass
-            [dumped_key, vtype.dump.call(v)]
-          else
-            [dumped_key, v]
-          end
+          dumped_value = vtype ? vtype.dump.call(v) : v
+          metadata[dumped_key]["v"] = vtype.klass if vtype
+          [dumped_key, dumped_value]
         end
-      metadata = {}
-      metadata["keys"] = key_meta unless key_meta.empty?
-      metadata["values"] = value_meta unless value_meta.empty?
       [JSON.generate(serialized), JSON.generate(metadata)]
     end
 
     def load(string, description)
       desc = JSON.parse(description)
-      keys = desc["keys"] || {}
-      values = desc["values"] || {}
       JSON
         .parse(string)
         .to_h do |k, v|
-          kname = keys[k]
+          entry = desc[k] || {}
+          kname = entry["k"]
+          vname = entry["v"]
           new_key = kname ? @key_types.by_name(kname).load.call(k) : k
-          vname = values[k]
           new_val = vname ? @value_types.by_name(vname).load.call(v) : v
           [new_key, new_val]
         end

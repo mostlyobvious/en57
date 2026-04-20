@@ -12,10 +12,10 @@ module En57
         PG::TextEncoder::Array.new.encode(
           [
             record_encoder.encode(
-              %w[CredditToppedUp {"amount":100} {"keys":{"amount":"Symbol"}}],
+              %w[CredditToppedUp {"amount":100} {"amount":{"k":"Symbol"}}],
             ),
             record_encoder.encode(
-              %w[CredditToppedUp {"amount":50} {"keys":{"amount":"Symbol"}}],
+              %w[CredditToppedUp {"amount":50} {"amount":{"k":"Symbol"}}],
             ),
           ],
         )
