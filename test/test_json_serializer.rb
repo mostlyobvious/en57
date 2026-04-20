@@ -36,12 +36,12 @@ module En57
       ["nil", nil, nil],
     ].map { example.new(*it) }
       .permutation(2) do |k, v|
-        meta = {}
-        meta["keys"] = { k.serialized => k.klass } unless String === k.value
-        meta["values"] = { k.serialized => v.klass } unless v.json_native?
+        meta = Hash.new { |h, k| h[k] = {} }
+        meta["keys"][k.serialized] = k.klass unless String === k.value
+        meta["values"][k.serialized] = v.klass unless v.json_native?
 
         payload = { k.value => v.value }
-        serialized = JSON.dump({ k.serialized => v.serialized })
+        serialized = JSON.dump(k.serialized => v.serialized)
 
         define_method("test_dump_#{k.name}_key_#{v.name}_value") do
           assert_equal([serialized, JSON.dump(meta)], serializer.dump(payload))
@@ -51,5 +51,9 @@ module En57
           assert_equal(payload, serializer.load(serialized, JSON.dump(meta)))
         end
       end
+
+    def test_empty_meta_for_native_payload
+      assert_equal(%w[{"kaka":"dudu"} {}], serializer.dump("kaka" => "dudu"))
+    end
   end
 end
