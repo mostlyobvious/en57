@@ -5,6 +5,7 @@ require "date"
 require "time"
 require "bigdecimal"
 require "json"
+require "openssl"
 
 module En57
   class TestJsonSerializer < Minitest::Test
@@ -12,32 +13,45 @@ module En57
 
     def serializer = JsonSerializer.new
 
-    example =
-      Data.define(:name, :value, :serialized) do
-        def json_native?
-          [String, Integer, Float, TrueClass, FalseClass, NilClass].any? do
-            it === value
-          end
-        end
+    class Example < Data.define(:name, :value, :serialized, :klass)
+      NATIVE_TYPES = %w[
+        String
+        Integer
+        Float
+        TrueClass
+        FalseClass
+        NilClass
+      ].freeze
+      private_constant :NATIVE_TYPES
 
-        def klass = value.class.name
+      def json_native? = NATIVE_TYPES.include?(klass)
+    end
+
+    cipher_bytes =
+      begin
+        cipher = OpenSSL::Cipher.new("aes-128-cbc")
+        cipher.encrypt
+        cipher.key = "\x00".b * 16
+        cipher.iv = "\x00".b * 16
+        cipher.update("hello") + cipher.final
       end
 
     [
-      %w[string str str],
-      ["symbol", :sym, "sym"],
-      ["date", Date.new(2024, 1, 1), "2024-01-01"],
-      ["time", Time.utc(2024, 1, 1, 12, 0, 0), "2024-01-01T12:00:00Z"],
-      ["big_decimal", BigDecimal("1.5"), "1.5"],
-      ["integer", 100, 100],
-      ["float", 1.5, 1.5],
-      ["true", true, true],
-      ["false", false, false],
-      ["nil", nil, nil],
-    ].map { example.new(*it) }
+      %w[string str str String],
+      ["symbol", :sym, "sym", "Symbol"],
+      ["date", Date.new(2024, 1, 1), "2024-01-01", "Date"],
+      ["time", Time.utc(2024, 1, 1, 12, 0, 0), "2024-01-01T12:00:00Z", "Time"],
+      ["big_decimal", BigDecimal("1.5"), "1.5", "BigDecimal"],
+      ["binary", cipher_bytes, [cipher_bytes].pack("m0"), "ASCII-8BIT"],
+      ["integer", 100, 100, "Integer"],
+      ["float", 1.5, 1.5, "Float"],
+      ["true", true, true, "TrueClass"],
+      ["false", false, false, "FalseClass"],
+      ["nil", nil, nil, "NilClass"],
+    ].map { Example.new(*it) }
       .permutation(2) do |k, v|
         meta = Hash.new { |h, k| h[k] = {} }
-        meta[k.serialized]["k"] = k.klass unless String === k.value
+        meta[k.serialized]["k"] = k.klass unless k.klass == "String"
         meta[k.serialized]["v"] = v.klass unless v.json_native?
 
         payload = { k.value => v.value }
