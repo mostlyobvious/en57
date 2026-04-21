@@ -7,7 +7,6 @@ require "time"
 module En57
   class JsonSerializer
     IDENTITY = lambda { it }
-    BINARY = lambda { String === it && it.encoding == Encoding::BINARY }
     Type = Data.define(:match, :name, :dump, :load)
 
     class Registry
@@ -21,7 +20,7 @@ module En57
         @by_name[type.name] = type
       end
 
-      def for_value(value) = @types.find { it.match === value }
+      def by_value(value) = @types.find { it.match === value }
 
       def by_name(name) = @by_name.fetch(name)
     end
@@ -30,45 +29,30 @@ module En57
       @key_types = Registry.new
       @value_types = Registry.new
       [
-        Type.new(Symbol, "Symbol", IDENTITY, lambda { it.to_sym }),
-        Type.new(Date, "Date", IDENTITY, lambda { Date.iso8601(it) }),
-        Type.new(
-          Time,
-          "Time",
-          lambda { it.iso8601 },
-          lambda { Time.iso8601(it) },
-        ),
-        Type.new(
-          BINARY,
-          "ASCII-8BIT",
-          lambda { [it].pack("m0") },
-          lambda { it.unpack1("m0") },
-        ),
+        symbol_type,
+        date_type,
+        time_type,
+        binary_type,
         *optional_big_decimal_type,
       ].each do |type|
         @key_types.register(type)
         @value_types.register(type)
       end
-      [
-        Type.new(Integer, "Integer", IDENTITY, lambda { Integer(it) }),
-        Type.new(Float, "Float", IDENTITY, lambda { Float(it) }),
-        Type.new(TrueClass, "TrueClass", IDENTITY, lambda { |_| true }),
-        Type.new(FalseClass, "FalseClass", IDENTITY, lambda { |_| false }),
-        Type.new(nil, "NilClass", IDENTITY, lambda { |_| }),
-      ].each { @key_types.register(it) }
+      [integer_type, float_type, true_type, false_type, nil_type].each do
+        @key_types.register(it)
+      end
     end
 
     def dump(payload)
       metadata = Hash.new { |h, k| h[k] = {} }
       serialized =
         payload.to_h do |k, v|
-          ktype = @key_types.for_value(k)
-          dumped_key = ktype ? ktype.dump.call(k) : k
+          ktype = @key_types.by_value(k)
+          dumped_key = ktype ? ktype.dump[k] : k
           metadata[dumped_key]["k"] = ktype.name if ktype
-          vtype = @value_types.for_value(v)
-          dumped_value = vtype ? vtype.dump.call(v) : v
+          vtype = @value_types.by_value(v)
           metadata[dumped_key]["v"] = vtype.name if vtype
-          [dumped_key, dumped_value]
+          [dumped_key, vtype ? vtype.dump[v] : v]
         end
       [JSON.generate(serialized), JSON.generate(metadata)]
     end
@@ -81,13 +65,44 @@ module En57
           entry = desc[k] || {}
           kname = entry["k"]
           vname = entry["v"]
-          new_key = kname ? @key_types.by_name(kname).load.call(k) : k
-          new_val = vname ? @value_types.by_name(vname).load.call(v) : v
-          [new_key, new_val]
+          [
+            kname ? @key_types.by_name(kname).load[k] : k,
+            vname ? @value_types.by_name(vname).load[v] : v,
+          ]
         end
     end
 
     private
+
+    def symbol_type = Type.new(Symbol, "Symbol", IDENTITY, lambda { it.to_sym })
+
+    def date_type =
+      Type.new(Date, "Date", IDENTITY, lambda { Date.iso8601(it) })
+
+    def time_type =
+      Type.new(Time, "Time", lambda { it.iso8601 }, lambda { Time.iso8601(it) })
+
+    def binary_type
+      Type.new(
+        lambda { String === it && it.encoding == Encoding::BINARY },
+        "ASCII-8BIT",
+        lambda { [it].pack("m0") },
+        lambda { it.unpack1("m0") },
+      )
+    end
+
+    def integer_type =
+      Type.new(Integer, "Integer", IDENTITY, lambda { Integer(it) })
+
+    def float_type = Type.new(Float, "Float", IDENTITY, lambda { Float(it) })
+
+    def true_type =
+      Type.new(TrueClass, "TrueClass", IDENTITY, lambda { |_| true })
+
+    def false_type =
+      Type.new(FalseClass, "FalseClass", IDENTITY, lambda { |_| false })
+
+    def nil_type = Type.new(nil, "NilClass", IDENTITY, lambda { |_| })
 
     def optional_big_decimal_type
       return [] unless defined?(BigDecimal)
