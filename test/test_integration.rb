@@ -6,71 +6,77 @@ require "pg_ephemeral"
 
 module En57
   class TestIntegration < Minitest::Test
+    SERVER = PgEphemeral.start
+    CONNECTION = PG.connect(SERVER.url)
+
+    Minitest.after_run do
+      CONNECTION.close
+      SERVER.shutdown
+    end
+
     def one = @one ||= SecureRandom.uuid
     def two = @two ||= SecureRandom.uuid
 
+    def setup
+      CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
+    end
+
     def test_happy_path
-      PgEphemeral.with_connection do |connection|
-        event_store =
-          EventStore.new(PgRepository.new(connection, JsonSerializer.new))
+      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
 
-        event_store.append(
-          [
-            Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
-            Event.new(
-              id: two,
-              type: "CredditToppedUp",
-              data: {
-                "amount" => 50,
-              },
-            ),
-          ],
-        )
+      event_store.append(
+        [
+          Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
+          Event.new(
+            id: two,
+            type: "CredditToppedUp",
+            data: {
+              "amount" => 50,
+            },
+          ),
+        ],
+      )
 
-        assert_equal(
-          [
-            Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
-            Event.new(
-              id: two,
-              type: "CredditToppedUp",
-              data: {
-                "amount" => 50,
-              },
-            ),
-          ],
-          event_store.read.each.to_a,
-        )
-      end
+      assert_equal(
+        [
+          Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
+          Event.new(
+            id: two,
+            type: "CredditToppedUp",
+            data: {
+              "amount" => 50,
+            },
+          ),
+        ],
+        event_store.read.each.to_a,
+      )
     end
 
     def test_tags_round_trip
-      PgEphemeral.with_connection do |connection|
-        event_store =
-          EventStore.new(PgRepository.new(connection, JsonSerializer.new))
+      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
 
-        event_store.append(
-          [
-            Event.new(
-              id: one,
-              type: "OrderPlaced",
-              data: { total: 42 },
-              tags: { order_id: "123" },
-            ),
-          ],
-        )
+      event_store.append(
+        [
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: { total: 42 },
+            tags: { order_id: "123" },
+          ),
+        ],
+      )
 
-        assert_equal(
-          [
-            Event.new(
-              id: one,
-              type: "OrderPlaced",
-              data: { total: 42 },
-              tags: { order_id: "123" },
-            ),
-          ],
-          event_store.read.each.to_a,
-        )
-      end
+      assert_equal(
+        [
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: { total: 42 },
+            tags: { order_id: "123" },
+          ),
+        ],
+        event_store.read.each.to_a,
+      )
     end
   end
 end
