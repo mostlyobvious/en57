@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "pg"
+
 module En57
   class PgRepository
     def initialize(connection, serializer)

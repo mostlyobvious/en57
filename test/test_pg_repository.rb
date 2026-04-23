@@ -8,10 +8,10 @@ module En57
 
     def one = @one ||= SecureRandom.uuid
     def two = @two ||= SecureRandom.uuid
+    def array_encoder = @array_encoder ||= PG::TextEncoder::Array.new
+    def record_encoder = @record_encoder ||= PG::TextEncoder::Record.new
 
     def test_append_event_with_tags
-      record_encoder = PG::TextEncoder::Record.new
-      array_encoder = PG::TextEncoder::Array.new
       expected_events =
         array_encoder.encode(
           [
@@ -72,7 +72,6 @@ module En57
     end
 
     def test_read_events_with_tags
-      array_encoder = PG::TextEncoder::Array.new
       connection = Minitest::Mock.new
       connection.expect(
         :exec_params,
@@ -129,7 +128,6 @@ module En57
     end
 
     def test_read_events_filtered_by_tags
-      array_encoder = PG::TextEncoder::Array.new
       query =
         Query.new(items: [QueryItem.new(types: [], tags: { order_id: "123" })])
       connection = Minitest::Mock.new
@@ -174,7 +172,6 @@ module En57
     end
 
     def test_read_events_with_wildcard_query_item
-      array_encoder = PG::TextEncoder::Array.new
       query = Query.new(items: [QueryItem.new(types: [], tags: {})])
       connection = Minitest::Mock.new
       connection.expect(
@@ -215,7 +212,6 @@ module En57
     end
 
     def test_read_events_with_or_tag_predicates
-      array_encoder = PG::TextEncoder::Array.new
       query =
         Query.new(
           items: [
@@ -265,7 +261,6 @@ module En57
     end
 
     def test_read_events_filtered_by_type
-      array_encoder = PG::TextEncoder::Array.new
       query =
         Query.new(items: [QueryItem.new(types: ["OrderPlaced"], tags: {})])
       connection = Minitest::Mock.new
