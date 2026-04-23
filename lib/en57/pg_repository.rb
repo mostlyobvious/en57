@@ -31,9 +31,15 @@ module En57
       )
     end
 
-    def read(_query)
+    def read(query)
+      array_encoder = PG::TextEncoder::Array.new
+      tag_filters = query.items.map { |item| JSON.generate(item.tags) }
+
       @connection
-        .exec_params("SELECT id, type, data, meta, tags FROM read_events()", [])
+        .exec_params(
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+          [array_encoder.encode(tag_filters)],
+        )
         .map do |row|
           Event.new(
             id: row.fetch("id"),

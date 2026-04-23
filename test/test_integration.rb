@@ -78,5 +78,38 @@ module En57
         event_store.read.each.to_a,
       )
     end
+
+    def test_read_filters_by_tags
+      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+
+      event_store.append(
+        [
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: { total: 42 },
+            tags: { order_id: "123", tenant_id: "acme" },
+          ),
+          Event.new(
+            id: two,
+            type: "OrderPlaced",
+            data: { total: 99 },
+            tags: { order_id: "456", tenant_id: "acme" },
+          ),
+        ],
+      )
+
+      assert_equal(
+        [
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: { total: 42 },
+            tags: { order_id: "123", tenant_id: "acme" },
+          ),
+        ],
+        event_store.read.with_tag(order_id: "123", tenant_id: "acme").each.to_a,
+      )
+    end
   end
 end

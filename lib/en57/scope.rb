@@ -12,5 +12,12 @@ module En57
 
       @repository.read(@query).each(&block)
     end
+
+    def with_tag(**tags)
+      self.class.new(
+        @repository,
+        @query.refine_last { |item| item.with_tags(tags) },
+      )
+    end
   end
 end

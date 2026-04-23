@@ -44,10 +44,47 @@ CREATE FUNCTION append_events (new_events event_with_tags[])
         CROSS JOIN LATERAL jsonb_each_text(COALESCE(e.tags, '{}'::jsonb)) AS t;
 $$;
 
-CREATE FUNCTION read_events ()
+CREATE FUNCTION read_events (tag_filters jsonb[])
     RETURNS SETOF event_with_tags
     LANGUAGE SQL
     AS $$
+    WITH filtered_events AS (
+        SELECT
+            e.position,
+            e.id,
+            e.type,
+            e.data,
+            e.meta
+        FROM
+            events AS e
+        WHERE
+            cardinality(tag_filters) = 0
+            OR EXISTS (
+                SELECT
+                    1
+                FROM
+                    unnest(tag_filters) AS filter
+                WHERE
+                    filter = '{}'::jsonb
+                    OR NOT EXISTS (
+                        SELECT
+                            1
+                        FROM
+                            jsonb_each_text(filter) AS f (key, value)
+                        WHERE
+                            NOT EXISTS (
+                                SELECT
+                                    1
+                                FROM
+                                    tags AS t
+                                WHERE
+                                    t.event_id = e.id
+                                    AND t.key = f.key
+                                    AND t.value = f.value
+                            )
+                    )
+            )
+    )
     SELECT
         e.id,
         e.type,
@@ -65,7 +102,7 @@ CREATE FUNCTION read_events ()
             '{}'::jsonb
         )
     FROM
-        events AS e
+        filtered_events AS e
     ORDER BY
         e.position;
 $$;
