@@ -23,7 +23,6 @@ description: Create a git commit following project conventions. Use this skill w
 ## Scope
 
 - One logical change per commit; split unrelated concerns.
-- User-facing changes update `CHANGELOG.md` (user-perspective only: no internal refactors).
 
 ## Procedure
 
