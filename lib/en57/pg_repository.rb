@@ -7,16 +7,15 @@ module En57
     def initialize(connection, serializer)
       @connection = connection
       @serializer = serializer
+      @record_encoder = PG::TextEncoder::Record.new
+      @array_encoder = PG::TextEncoder::Array.new
     end
 
     def append(events)
-      record_encoder = PG::TextEncoder::Record.new
-      array_encoder = PG::TextEncoder::Array.new
-
       event_records =
         events.map do |event|
           serialized, description = @serializer.dump(event.data)
-          record_encoder.encode(
+          @record_encoder.encode(
             [
               event.id,
               event.type,
@@ -29,12 +28,11 @@ module En57
 
       @connection.exec_params(
         "SELECT append_events($1::event_with_tags[])",
-        [array_encoder.encode(event_records)],
+        [@array_encoder.encode(event_records)],
       )
     end
 
     def read(query)
-      array_encoder = PG::TextEncoder::Array.new
       tag_filters = query.items.map { |item| JSON.generate(item.tags) }
       type_filters = query.items.map { |item| JSON.generate(item.types) }
 
@@ -42,8 +40,8 @@ module En57
         .exec_params(
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
           [
-            array_encoder.encode(tag_filters),
-            array_encoder.encode(type_filters),
+            @array_encoder.encode(tag_filters),
+            @array_encoder.encode(type_filters),
           ],
         )
         .map do |row|
