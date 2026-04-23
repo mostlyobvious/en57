@@ -30,14 +30,26 @@ module En57
         event_store.append(
           [
             Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
-            Event.new(id: two, type: "CredditToppedUp", data: { "amount" => 50 }),
+            Event.new(
+              id: two,
+              type: "CredditToppedUp",
+              data: {
+                "amount" => 50,
+              },
+            ),
           ],
         )
 
         assert_equal(
           [
             Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
-            Event.new(id: two, type: "CredditToppedUp", data: { "amount" => 50 }),
+            Event.new(
+              id: two,
+              type: "CredditToppedUp",
+              data: {
+                "amount" => 50,
+              },
+            ),
           ],
           event_store.read.each.to_a,
         )
@@ -122,7 +134,11 @@ module En57
               },
             ),
           ],
-          event_store.read.with_tag(order_id: "123", tenant_id: "acme").each.to_a,
+          event_store
+            .read
+            .with_tag(order_id: "123", tenant_id: "acme")
+            .each
+            .to_a,
         )
       end
     end
@@ -343,7 +359,8 @@ module En57
           ],
         )
 
-        orders = event_store.read.of_type("OrderPlaced").with_tag(order_id: "123")
+        orders =
+          event_store.read.of_type("OrderPlaced").with_tag(order_id: "123")
         prices = event_store.read.of_type("PriceChanged")
 
         assert_equal(
