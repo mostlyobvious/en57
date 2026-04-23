@@ -8,6 +8,7 @@ module En57
 
     def append(events)
       @repository.append(events)
+      self
     end
 
     def read

@@ -44,5 +44,14 @@ module En57
       assert_equal(events, result.each.to_a)
       repository.verify
     end
+
+    def test_return_self_from_append
+      events = [Event.new(id: SecureRandom.uuid, type: "CredditToppedUp")]
+      repository = Minitest::Mock.new
+      repository.expect(:append, nil, [events])
+      event_store = EventStore.new(repository)
+
+      assert_equal(event_store, event_store.append(events))
+    end
   end
 end
