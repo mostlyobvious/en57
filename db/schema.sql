@@ -6,14 +6,22 @@ CREATE TABLE events (
     meta jsonb NOT NULL
 );
 
-CREATE TYPE event AS (
+CREATE TABLE tags (
+    event_id uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+    key text NOT NULL,
+    value text NOT NULL,
+    PRIMARY KEY (event_id, key)
+);
+
+CREATE TYPE event_with_tags AS (
     id uuid,
     type text,
     data jsonb,
-    meta jsonb
+    meta jsonb,
+    tags jsonb
 );
 
-CREATE FUNCTION append_events (new_events event[])
+CREATE FUNCTION append_events (new_events event_with_tags[])
     RETURNS void
     LANGUAGE SQL
     AS $$
@@ -25,19 +33,39 @@ CREATE FUNCTION append_events (new_events event[])
         e.meta
     FROM
         unnest(new_events) AS e;
+
+    INSERT INTO tags (event_id, key, value)
+    SELECT
+        e.id,
+        t.key,
+        t.value
+    FROM
+        unnest(new_events) AS e
+        CROSS JOIN LATERAL jsonb_each_text(COALESCE(e.tags, '{}'::jsonb)) AS t;
 $$;
 
 CREATE FUNCTION read_events ()
-    RETURNS SETOF event
+    RETURNS SETOF event_with_tags
     LANGUAGE SQL
     AS $$
     SELECT
-        id,
-        type,
-        data,
-        meta
+        e.id,
+        e.type,
+        e.data,
+        e.meta,
+        COALESCE(
+            (
+                SELECT
+                    jsonb_object_agg(t.key, t.value)
+                FROM
+                    tags AS t
+                WHERE
+                    t.event_id = e.id
+            ),
+            '{}'::jsonb
+        )
     FROM
-        events
+        events AS e
     ORDER BY
-        position;
+        e.position;
 $$;

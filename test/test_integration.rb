@@ -42,5 +42,35 @@ module En57
         )
       end
     end
+
+    def test_tags_round_trip
+      PgEphemeral.with_connection do |connection|
+        event_store =
+          EventStore.new(PgRepository.new(connection, JsonSerializer.new))
+
+        event_store.append(
+          [
+            Event.new(
+              id: one,
+              type: "OrderPlaced",
+              data: { total: 42 },
+              tags: { order_id: "123" },
+            ),
+          ],
+        )
+
+        assert_equal(
+          [
+            Event.new(
+              id: one,
+              type: "OrderPlaced",
+              data: { total: 42 },
+              tags: { order_id: "123" },
+            ),
+          ],
+          event_store.read,
+        )
+      end
+    end
   end
 end
