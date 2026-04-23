@@ -20,8 +20,8 @@ module En57
       item = QueryItem.new(types: ["OrderPlaced"], tags: {})
 
       assert_equal(
-        QueryItem.new(types: ["OrderPlaced", "PriceChanged"], tags: {}),
-        item.with_types(["PriceChanged", "OrderPlaced"]),
+        QueryItem.new(types: %w[OrderPlaced PriceChanged], tags: {}),
+        item.with_types(%w[PriceChanged OrderPlaced]),
       )
     end
 
@@ -47,7 +47,10 @@ module En57
             QueryItem.new(types: ["A"], tags: { tenant_id: "acme" }),
             QueryItem.new(
               types: ["B"],
-              tags: { order_id: "123", user_id: "42" },
+              tags: {
+                order_id: "123",
+                user_id: "42",
+              },
             ),
           ],
         ),

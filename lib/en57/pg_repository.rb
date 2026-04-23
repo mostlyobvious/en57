@@ -39,7 +39,10 @@ module En57
       @connection
         .exec_params(
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
-          [array_encoder.encode(tag_filters), array_encoder.encode(type_filters)],
+          [
+            array_encoder.encode(tag_filters),
+            array_encoder.encode(type_filters),
+          ],
         )
         .map do |row|
           Event.new(

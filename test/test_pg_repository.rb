@@ -48,14 +48,22 @@ module En57
           Event.new(
             id: one,
             type: "CredditToppedUp",
-            data: { amount: 100 },
-            tags: { order_id: "123" },
+            data: {
+              amount: 100,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
           Event.new(
             id: two,
             type: "CredditToppedUp",
-            data: { amount: 50 },
-            tags: { order_id: "234" },
+            data: {
+              amount: 50,
+            },
+            tags: {
+              order_id: "234",
+            },
           ),
         ],
       )
@@ -100,13 +108,19 @@ module En57
             data: {
               "amount" => 100,
             },
-            tags: { order_id: "123" },
+            tags: {
+              order_id: "123",
+            },
           ),
           Event.new(
             id: two,
             type: "CredditToppedUp",
-            data: { "amount" => 50 },
-            tags: { order_id: "234" },
+            data: {
+              "amount" => 50,
+            },
+            tags: {
+              order_id: "234",
+            },
           ),
         ],
         repository.read(Query.all),
@@ -116,7 +130,8 @@ module En57
 
     def test_read_events_filtered_by_tags
       array_encoder = PG::TextEncoder::Array.new
-      query = Query.new(items: [QueryItem.new(types: [], tags: { order_id: "123" })])
+      query =
+        Query.new(items: [QueryItem.new(types: [], tags: { order_id: "123" })])
       connection = Minitest::Mock.new
       connection.expect(
         :exec_params,
@@ -131,7 +146,10 @@ module En57
         ],
         [
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
-          [array_encoder.encode(['{"order_id":"123"}']), array_encoder.encode(['[]'])],
+          [
+            array_encoder.encode(['{"order_id":"123"}']),
+            array_encoder.encode(["[]"]),
+          ],
         ],
       )
 
@@ -142,8 +160,12 @@ module En57
           Event.new(
             id: one,
             type: "CredditToppedUp",
-            data: { "amount" => 100 },
-            tags: { order_id: "123" },
+            data: {
+              "amount" => 100,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
         ],
         repository.read(query),
@@ -168,7 +190,7 @@ module En57
         ],
         [
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
-          [array_encoder.encode(['{}']), array_encoder.encode(['[]'])],
+          [array_encoder.encode(["{}"]), array_encoder.encode(["[]"])],
         ],
       )
 
@@ -179,8 +201,12 @@ module En57
           Event.new(
             id: one,
             type: "CredditToppedUp",
-            data: { "amount" => 100 },
-            tags: { order_id: "123" },
+            data: {
+              "amount" => 100,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
         ],
         repository.read(query),
@@ -212,8 +238,8 @@ module En57
         [
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
           [
-            array_encoder.encode(['{"order_id":"123"}', '{"order_id":"456"}']),
-            array_encoder.encode(['[]', '[]']),
+            array_encoder.encode(%w[{"order_id":"123"} {"order_id":"456"}]),
+            array_encoder.encode(["[]", "[]"]),
           ],
         ],
       )
@@ -225,8 +251,12 @@ module En57
           Event.new(
             id: one,
             type: "CredditToppedUp",
-            data: { "amount" => 100 },
-            tags: { order_id: "123" },
+            data: {
+              "amount" => 100,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
         ],
         repository.read(query),
@@ -236,7 +266,8 @@ module En57
 
     def test_read_events_filtered_by_type
       array_encoder = PG::TextEncoder::Array.new
-      query = Query.new(items: [QueryItem.new(types: ["OrderPlaced"], tags: {})])
+      query =
+        Query.new(items: [QueryItem.new(types: ["OrderPlaced"], tags: {})])
       connection = Minitest::Mock.new
       connection.expect(
         :exec_params,
@@ -246,12 +277,15 @@ module En57
             "type" => "OrderPlaced",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => '{}',
+            "tags" => "{}",
           },
         ],
         [
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
-          [array_encoder.encode(['{}']), array_encoder.encode(['["OrderPlaced"]'])],
+          [
+            array_encoder.encode(["{}"]),
+            array_encoder.encode(['["OrderPlaced"]']),
+          ],
         ],
       )
 
@@ -262,8 +296,11 @@ module En57
           Event.new(
             id: one,
             type: "OrderPlaced",
-            data: { "amount" => 100 },
-            tags: {},
+            data: {
+              "amount" => 100,
+            },
+            tags: {
+            },
           ),
         ],
         repository.read(query),

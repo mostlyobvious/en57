@@ -34,7 +34,11 @@ module En57
       repository.expect(
         :read,
         [],
-        [Query.new(items: [QueryItem.new(types: [], tags: { order_id: "123" })])],
+        [
+          Query.new(
+            items: [QueryItem.new(types: [], tags: { order_id: "123" })],
+          ),
+        ],
       )
 
       assert_equal([], base_scope.each.to_a)
@@ -54,7 +58,7 @@ module En57
         [
           Query.new(
             items: [
-              QueryItem.new(types: ["OrderPlaced", "OrderCancelled"], tags: {}),
+              QueryItem.new(types: %w[OrderPlaced OrderCancelled], tags: {}),
             ],
           ),
         ],

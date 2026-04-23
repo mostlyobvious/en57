@@ -22,46 +22,40 @@ module En57
     end
 
     def test_happy_path
-      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+      event_store =
+        EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
 
       event_store.append(
         [
           Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
-          Event.new(
-            id: two,
-            type: "CredditToppedUp",
-            data: {
-              "amount" => 50,
-            },
-          ),
+          Event.new(id: two, type: "CredditToppedUp", data: { "amount" => 50 }),
         ],
       )
 
       assert_equal(
         [
           Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
-          Event.new(
-            id: two,
-            type: "CredditToppedUp",
-            data: {
-              "amount" => 50,
-            },
-          ),
+          Event.new(id: two, type: "CredditToppedUp", data: { "amount" => 50 }),
         ],
         event_store.read.each.to_a,
       )
     end
 
     def test_tags_round_trip
-      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+      event_store =
+        EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
 
       event_store.append(
         [
           Event.new(
             id: one,
             type: "OrderPlaced",
-            data: { total: 42 },
-            tags: { order_id: "123" },
+            data: {
+              total: 42,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
         ],
       )
@@ -71,8 +65,12 @@ module En57
           Event.new(
             id: one,
             type: "OrderPlaced",
-            data: { total: 42 },
-            tags: { order_id: "123" },
+            data: {
+              total: 42,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
         ],
         event_store.read.each.to_a,
@@ -80,21 +78,32 @@ module En57
     end
 
     def test_read_filters_by_tags
-      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+      event_store =
+        EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
 
       event_store.append(
         [
           Event.new(
             id: one,
             type: "OrderPlaced",
-            data: { total: 42 },
-            tags: { order_id: "123", tenant_id: "acme" },
+            data: {
+              total: 42,
+            },
+            tags: {
+              order_id: "123",
+              tenant_id: "acme",
+            },
           ),
           Event.new(
             id: two,
             type: "OrderPlaced",
-            data: { total: 99 },
-            tags: { order_id: "456", tenant_id: "acme" },
+            data: {
+              total: 99,
+            },
+            tags: {
+              order_id: "456",
+              tenant_id: "acme",
+            },
           ),
         ],
       )
@@ -104,8 +113,13 @@ module En57
           Event.new(
             id: one,
             type: "OrderPlaced",
-            data: { total: 42 },
-            tags: { order_id: "123", tenant_id: "acme" },
+            data: {
+              total: 42,
+            },
+            tags: {
+              order_id: "123",
+              tenant_id: "acme",
+            },
           ),
         ],
         event_store.read.with_tag(order_id: "123", tenant_id: "acme").each.to_a,
@@ -113,46 +127,104 @@ module En57
     end
 
     def test_read_filters_by_type
-      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+      event_store =
+        EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
 
       event_store.append(
         [
-          Event.new(id: one, type: "OrderPlaced", data: { total: 42 }, tags: {}),
-          Event.new(id: two, type: "PriceChanged", data: { value: 99 }, tags: {}),
-        ],
-      )
-
-      assert_equal(
-        [Event.new(id: one, type: "OrderPlaced", data: { total: 42 }, tags: {})],
-        event_store.read.of_type("OrderPlaced").each.to_a,
-      )
-    end
-
-    def test_read_filters_by_any_of_types
-      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
-      three = SecureRandom.uuid
-
-      event_store.append(
-        [
-          Event.new(id: one, type: "OrderPlaced", data: { total: 42 }, tags: {}),
-          Event.new(id: two, type: "PriceChanged", data: { value: 99 }, tags: {}),
           Event.new(
-            id: three,
-            type: "OrderCancelled",
-            data: { reason: "dup" },
-            tags: {},
+            id: one,
+            type: "OrderPlaced",
+            data: {
+              total: 42,
+            },
+            tags: {
+            },
+          ),
+          Event.new(
+            id: two,
+            type: "PriceChanged",
+            data: {
+              value: 99,
+            },
+            tags: {
+            },
           ),
         ],
       )
 
       assert_equal(
         [
-          Event.new(id: one, type: "OrderPlaced", data: { total: 42 }, tags: {}),
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: {
+              total: 42,
+            },
+            tags: {
+            },
+          ),
+        ],
+        event_store.read.of_type("OrderPlaced").each.to_a,
+      )
+    end
+
+    def test_read_filters_by_any_of_types
+      event_store =
+        EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+      three = SecureRandom.uuid
+
+      event_store.append(
+        [
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: {
+              total: 42,
+            },
+            tags: {
+            },
+          ),
+          Event.new(
+            id: two,
+            type: "PriceChanged",
+            data: {
+              value: 99,
+            },
+            tags: {
+            },
+          ),
           Event.new(
             id: three,
             type: "OrderCancelled",
-            data: { reason: "dup" },
-            tags: {},
+            data: {
+              reason: "dup",
+            },
+            tags: {
+            },
+          ),
+        ],
+      )
+
+      assert_equal(
+        [
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: {
+              total: 42,
+            },
+            tags: {
+            },
+          ),
+          Event.new(
+            id: three,
+            type: "OrderCancelled",
+            data: {
+              reason: "dup",
+            },
+            tags: {
+            },
           ),
         ],
         event_store.read.of_type("OrderPlaced", "OrderCancelled").each.to_a,
@@ -160,7 +232,8 @@ module En57
     end
 
     def test_read_filters_by_type_and_tag_on_same_item
-      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+      event_store =
+        EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
       three = SecureRandom.uuid
 
       event_store.append(
@@ -168,20 +241,32 @@ module En57
           Event.new(
             id: one,
             type: "OrderPlaced",
-            data: { total: 42 },
-            tags: { order_id: "123" },
+            data: {
+              total: 42,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
           Event.new(
             id: two,
             type: "OrderPlaced",
-            data: { total: 99 },
-            tags: { order_id: "456" },
+            data: {
+              total: 99,
+            },
+            tags: {
+              order_id: "456",
+            },
           ),
           Event.new(
             id: three,
             type: "PriceChanged",
-            data: { value: 10 },
-            tags: { order_id: "123" },
+            data: {
+              value: 10,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
         ],
       )
@@ -191,16 +276,26 @@ module En57
           Event.new(
             id: one,
             type: "OrderPlaced",
-            data: { total: 42 },
-            tags: { order_id: "123" },
+            data: {
+              total: 42,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
         ],
-        event_store.read.of_type("OrderPlaced").with_tag(order_id: "123").each.to_a,
+        event_store
+          .read
+          .of_type("OrderPlaced")
+          .with_tag(order_id: "123")
+          .each
+          .to_a,
       )
     end
 
     def test_read_or_combines_scopes_as_disjunction
-      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+      event_store =
+        EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
       three = SecureRandom.uuid
       four = SecureRandom.uuid
 
@@ -209,26 +304,42 @@ module En57
           Event.new(
             id: one,
             type: "OrderPlaced",
-            data: { total: 42 },
-            tags: { order_id: "123" },
+            data: {
+              total: 42,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
           Event.new(
             id: two,
             type: "OrderPlaced",
-            data: { total: 99 },
-            tags: { order_id: "456" },
+            data: {
+              total: 99,
+            },
+            tags: {
+              order_id: "456",
+            },
           ),
           Event.new(
             id: three,
             type: "PriceChanged",
-            data: { value: 10 },
-            tags: { order_id: "999" },
+            data: {
+              value: 10,
+            },
+            tags: {
+              order_id: "999",
+            },
           ),
           Event.new(
             id: four,
             type: "InventoryAdjusted",
-            data: { delta: 1 },
-            tags: { sku: "A1" },
+            data: {
+              delta: 1,
+            },
+            tags: {
+              sku: "A1",
+            },
           ),
         ],
       )
@@ -241,14 +352,22 @@ module En57
           Event.new(
             id: one,
             type: "OrderPlaced",
-            data: { total: 42 },
-            tags: { order_id: "123" },
+            data: {
+              total: 42,
+            },
+            tags: {
+              order_id: "123",
+            },
           ),
           Event.new(
             id: three,
             type: "PriceChanged",
-            data: { value: 10 },
-            tags: { order_id: "999" },
+            data: {
+              value: 10,
+            },
+            tags: {
+              order_id: "999",
+            },
           ),
         ],
         (orders | prices).each.to_a,

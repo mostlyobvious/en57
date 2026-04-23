@@ -21,9 +21,7 @@ module En57
       def refine_last
         existing_items = items.empty? ? [QueryItem.all] : items
 
-        with(
-          items: [*existing_items[0...-1], yield(existing_items.last)],
-        )
+        with(items: [*existing_items[0...-1], yield(existing_items.last)])
       end
 
       def or(other)
