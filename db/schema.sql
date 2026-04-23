@@ -2,7 +2,7 @@ SET client_min_messages = warning;
 
 CREATE TABLE IF NOT EXISTS events (
     id uuid PRIMARY KEY,
-    type TEXT NOT NULL,
+    type text NOT NULL,
     data jsonb NOT NULL,
     meta jsonb NOT NULL
 );
@@ -11,7 +11,7 @@ DO $$
 BEGIN
     CREATE TYPE event AS (
         id uuid,
-        type TEXT,
+        type text,
         data jsonb,
         meta jsonb
 );
