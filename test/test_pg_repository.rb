@@ -6,9 +6,10 @@ module En57
   class TestPgRepository < Minitest::Test
     cover PgRepository
 
-    def one = @one ||= SecureRandom.uuid
-    def two = @two ||= SecureRandom.uuid
+    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid }
+
     def array_encoder = @array_encoder ||= PG::TextEncoder::Array.new
+
     def record_encoder = @record_encoder ||= PG::TextEncoder::Record.new
 
     def test_append_event_with_tags
@@ -17,7 +18,7 @@ module En57
           [
             record_encoder.encode(
               [
-                one,
+                ids[0],
                 "CredditToppedUp",
                 '{"amount":100}',
                 '{"amount":{"k":"Symbol"}}',
@@ -26,7 +27,7 @@ module En57
             ),
             record_encoder.encode(
               [
-                two,
+                ids[1],
                 "CredditToppedUp",
                 '{"amount":50}',
                 '{"amount":{"k":"Symbol"}}',
@@ -46,7 +47,7 @@ module En57
       repository.append(
         [
           Event.new(
-            id: one,
+            id: ids[0],
             type: "CredditToppedUp",
             data: {
               amount: 100,
@@ -56,7 +57,7 @@ module En57
             },
           ),
           Event.new(
-            id: two,
+            id: ids[1],
             type: "CredditToppedUp",
             data: {
               amount: 50,
@@ -77,14 +78,14 @@ module En57
         :exec_params,
         [
           {
-            "id" => one,
+            "id" => ids[0],
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
             "tags" => '{"order_id":"123"}',
           },
           {
-            "id" => two,
+            "id" => ids[1],
             "type" => "CredditToppedUp",
             "data" => '{"amount":50}',
             "meta" => "{}",
@@ -102,7 +103,7 @@ module En57
       assert_equal(
         [
           Event.new(
-            id: one,
+            id: ids[0],
             type: "CredditToppedUp",
             data: {
               "amount" => 100,
@@ -112,7 +113,7 @@ module En57
             },
           ),
           Event.new(
-            id: two,
+            id: ids[1],
             type: "CredditToppedUp",
             data: {
               "amount" => 50,
@@ -135,7 +136,7 @@ module En57
         :exec_params,
         [
           {
-            "id" => one,
+            "id" => ids[0],
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
@@ -156,7 +157,7 @@ module En57
       assert_equal(
         [
           Event.new(
-            id: one,
+            id: ids[0],
             type: "CredditToppedUp",
             data: {
               "amount" => 100,
@@ -178,7 +179,7 @@ module En57
         :exec_params,
         [
           {
-            "id" => one,
+            "id" => ids[0],
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
@@ -196,7 +197,7 @@ module En57
       assert_equal(
         [
           Event.new(
-            id: one,
+            id: ids[0],
             type: "CredditToppedUp",
             data: {
               "amount" => 100,
@@ -224,7 +225,7 @@ module En57
         :exec_params,
         [
           {
-            "id" => one,
+            "id" => ids[0],
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
@@ -245,7 +246,7 @@ module En57
       assert_equal(
         [
           Event.new(
-            id: one,
+            id: ids[0],
             type: "CredditToppedUp",
             data: {
               "amount" => 100,
@@ -268,7 +269,7 @@ module En57
         :exec_params,
         [
           {
-            "id" => one,
+            "id" => ids[0],
             "type" => "OrderPlaced",
             "data" => '{"amount":100}',
             "meta" => "{}",
@@ -289,7 +290,7 @@ module En57
       assert_equal(
         [
           Event.new(
-            id: one,
+            id: ids[0],
             type: "OrderPlaced",
             data: {
               "amount" => 100,

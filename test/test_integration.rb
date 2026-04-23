@@ -14,24 +14,27 @@ module En57
       SERVER.shutdown
     end
 
-    def one = @one ||= SecureRandom.uuid
-    def two = @two ||= SecureRandom.uuid
+    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid }
 
-    def with_event_store
-      yield(EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new)))
-    end
+    def with_event_store =
+      yield EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
 
-    def setup
+    def setup =
       CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
-    end
 
     def test_happy_path
       with_event_store do |event_store|
         event_store.append(
           [
-            Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
             Event.new(
-              id: two,
+              id: ids[0],
+              type: "CredditToppedUp",
+              data: {
+                amount: 100,
+              },
+            ),
+            Event.new(
+              id: ids[1],
               type: "CredditToppedUp",
               data: {
                 "amount" => 50,
@@ -42,9 +45,15 @@ module En57
 
         assert_equal(
           [
-            Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
             Event.new(
-              id: two,
+              id: ids[0],
+              type: "CredditToppedUp",
+              data: {
+                amount: 100,
+              },
+            ),
+            Event.new(
+              id: ids[1],
               type: "CredditToppedUp",
               data: {
                 "amount" => 50,
@@ -61,7 +70,7 @@ module En57
         event_store.append(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -76,7 +85,7 @@ module En57
         assert_equal(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -96,7 +105,7 @@ module En57
         event_store.append(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -107,7 +116,7 @@ module En57
               },
             ),
             Event.new(
-              id: two,
+              id: ids[1],
               type: "OrderPlaced",
               data: {
                 total: 99,
@@ -123,7 +132,7 @@ module En57
         assert_equal(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -148,7 +157,7 @@ module En57
         event_store.append(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -157,7 +166,7 @@ module En57
               },
             ),
             Event.new(
-              id: two,
+              id: ids[1],
               type: "PriceChanged",
               data: {
                 value: 99,
@@ -171,7 +180,7 @@ module En57
         assert_equal(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -187,12 +196,10 @@ module En57
 
     def test_read_filters_by_any_of_types
       with_event_store do |event_store|
-        three = SecureRandom.uuid
-
         event_store.append(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -201,7 +208,7 @@ module En57
               },
             ),
             Event.new(
-              id: two,
+              id: ids[1],
               type: "PriceChanged",
               data: {
                 value: 99,
@@ -210,7 +217,7 @@ module En57
               },
             ),
             Event.new(
-              id: three,
+              id: ids[2],
               type: "OrderCancelled",
               data: {
                 reason: "dup",
@@ -224,7 +231,7 @@ module En57
         assert_equal(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -233,7 +240,7 @@ module En57
               },
             ),
             Event.new(
-              id: three,
+              id: ids[2],
               type: "OrderCancelled",
               data: {
                 reason: "dup",
@@ -249,12 +256,10 @@ module En57
 
     def test_read_filters_by_type_and_tag_on_same_item
       with_event_store do |event_store|
-        three = SecureRandom.uuid
-
         event_store.append(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -264,7 +269,7 @@ module En57
               },
             ),
             Event.new(
-              id: two,
+              id: ids[1],
               type: "OrderPlaced",
               data: {
                 total: 99,
@@ -274,7 +279,7 @@ module En57
               },
             ),
             Event.new(
-              id: three,
+              id: ids[2],
               type: "PriceChanged",
               data: {
                 value: 10,
@@ -289,7 +294,7 @@ module En57
         assert_equal(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -311,13 +316,10 @@ module En57
 
     def test_read_or_combines_scopes_as_disjunction
       with_event_store do |event_store|
-        three = SecureRandom.uuid
-        four = SecureRandom.uuid
-
         event_store.append(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -327,7 +329,7 @@ module En57
               },
             ),
             Event.new(
-              id: two,
+              id: ids[1],
               type: "OrderPlaced",
               data: {
                 total: 99,
@@ -337,7 +339,7 @@ module En57
               },
             ),
             Event.new(
-              id: three,
+              id: ids[2],
               type: "PriceChanged",
               data: {
                 value: 10,
@@ -347,7 +349,7 @@ module En57
               },
             ),
             Event.new(
-              id: four,
+              id: ids[3],
               type: "InventoryAdjusted",
               data: {
                 delta: 1,
@@ -366,7 +368,7 @@ module En57
         assert_equal(
           [
             Event.new(
-              id: one,
+              id: ids[0],
               type: "OrderPlaced",
               data: {
                 total: 42,
@@ -376,7 +378,7 @@ module En57
               },
             ),
             Event.new(
-              id: three,
+              id: ids[2],
               type: "PriceChanged",
               data: {
                 value: 10,
