@@ -158,5 +158,45 @@ module En57
         event_store.read.of_type("OrderPlaced", "OrderCancelled").each.to_a,
       )
     end
+
+    def test_read_filters_by_type_and_tag_on_same_item
+      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+      three = SecureRandom.uuid
+
+      event_store.append(
+        [
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: { total: 42 },
+            tags: { order_id: "123" },
+          ),
+          Event.new(
+            id: two,
+            type: "OrderPlaced",
+            data: { total: 99 },
+            tags: { order_id: "456" },
+          ),
+          Event.new(
+            id: three,
+            type: "PriceChanged",
+            data: { value: 10 },
+            tags: { order_id: "123" },
+          ),
+        ],
+      )
+
+      assert_equal(
+        [
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: { total: 42 },
+            tags: { order_id: "123" },
+          ),
+        ],
+        event_store.read.of_type("OrderPlaced").with_tag(order_id: "123").each.to_a,
+      )
+    end
   end
 end
