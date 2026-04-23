@@ -85,8 +85,8 @@ module En57
           },
         ],
         [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode([])],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
+          [array_encoder.encode([]), array_encoder.encode([])],
         ],
       )
 
@@ -130,8 +130,8 @@ module En57
           },
         ],
         [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(['{"order_id":"123"}'])],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
+          [array_encoder.encode(['{"order_id":"123"}']), array_encoder.encode(['[]'])],
         ],
       )
 
@@ -167,8 +167,8 @@ module En57
           },
         ],
         [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(['{}'])],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
+          [array_encoder.encode(['{}']), array_encoder.encode(['[]'])],
         ],
       )
 
@@ -210,8 +210,11 @@ module En57
           },
         ],
         [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(['{"order_id":"123"}', '{"order_id":"456"}'])],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
+          [
+            array_encoder.encode(['{"order_id":"123"}', '{"order_id":"456"}']),
+            array_encoder.encode(['[]', '[]']),
+          ],
         ],
       )
 
@@ -224,6 +227,43 @@ module En57
             type: "CredditToppedUp",
             data: { "amount" => 100 },
             tags: { order_id: "123" },
+          ),
+        ],
+        repository.read(query),
+      )
+      connection.verify
+    end
+
+    def test_read_events_filtered_by_type
+      array_encoder = PG::TextEncoder::Array.new
+      query = Query.new(items: [QueryItem.new(types: ["OrderPlaced"], tags: {})])
+      connection = Minitest::Mock.new
+      connection.expect(
+        :exec_params,
+        [
+          {
+            "id" => one,
+            "type" => "OrderPlaced",
+            "data" => '{"amount":100}',
+            "meta" => "{}",
+            "tags" => '{}',
+          },
+        ],
+        [
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
+          [array_encoder.encode(['{}']), array_encoder.encode(['["OrderPlaced"]'])],
+        ],
+      )
+
+      repository = PgRepository.new(connection, JsonSerializer.new)
+
+      assert_equal(
+        [
+          Event.new(
+            id: one,
+            type: "OrderPlaced",
+            data: { "amount" => 100 },
+            tags: {},
           ),
         ],
         repository.read(query),

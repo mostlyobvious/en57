@@ -8,6 +8,10 @@ module En57
       def with_tags(tags)
         with(tags: self.tags.merge(tags))
       end
+
+      def with_types(types)
+        with(types: [*self.types, *types].uniq)
+      end
     end
 
   Query =

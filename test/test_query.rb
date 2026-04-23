@@ -16,6 +16,15 @@ module En57
       )
     end
 
+    def test_query_item_with_types_merges
+      item = QueryItem.new(types: ["OrderPlaced"], tags: {})
+
+      assert_equal(
+        QueryItem.new(types: ["OrderPlaced", "PriceChanged"], tags: {}),
+        item.with_types(["PriceChanged", "OrderPlaced"]),
+      )
+    end
+
     def test_refine_last_starts_from_all_item
       assert_equal(
         Query.new(items: [QueryItem.new(types: [], tags: { order_id: "123" })]),

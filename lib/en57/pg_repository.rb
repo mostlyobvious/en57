@@ -34,11 +34,12 @@ module En57
     def read(query)
       array_encoder = PG::TextEncoder::Array.new
       tag_filters = query.items.map { |item| JSON.generate(item.tags) }
+      type_filters = query.items.map { |item| JSON.generate(item.types) }
 
       @connection
         .exec_params(
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(tag_filters)],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
+          [array_encoder.encode(tag_filters), array_encoder.encode(type_filters)],
         )
         .map do |row|
           Event.new(

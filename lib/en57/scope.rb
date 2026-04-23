@@ -19,5 +19,12 @@ module En57
         @query.refine_last { |item| item.with_tags(tags) },
       )
     end
+
+    def of_type(*types)
+      self.class.new(
+        @repository,
+        @query.refine_last { |item| item.with_types(types) },
+      )
+    end
   end
 end

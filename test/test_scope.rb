@@ -41,5 +41,28 @@ module En57
       assert_equal([], filtered_scope.each.to_a)
       repository.verify
     end
+
+    def test_of_type_refines_query
+      repository = Minitest::Mock.new
+      base_scope = Scope.new(repository, Query.all)
+      filtered_scope = base_scope.of_type("OrderPlaced", "OrderCancelled")
+
+      repository.expect(:read, [], [Query.all])
+      repository.expect(
+        :read,
+        [],
+        [
+          Query.new(
+            items: [
+              QueryItem.new(types: ["OrderPlaced", "OrderCancelled"], tags: {}),
+            ],
+          ),
+        ],
+      )
+
+      assert_equal([], base_scope.each.to_a)
+      assert_equal([], filtered_scope.each.to_a)
+      repository.verify
+    end
   end
 end

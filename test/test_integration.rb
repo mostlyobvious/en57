@@ -111,5 +111,52 @@ module En57
         event_store.read.with_tag(order_id: "123", tenant_id: "acme").each.to_a,
       )
     end
+
+    def test_read_filters_by_type
+      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+
+      event_store.append(
+        [
+          Event.new(id: one, type: "OrderPlaced", data: { total: 42 }, tags: {}),
+          Event.new(id: two, type: "PriceChanged", data: { value: 99 }, tags: {}),
+        ],
+      )
+
+      assert_equal(
+        [Event.new(id: one, type: "OrderPlaced", data: { total: 42 }, tags: {})],
+        event_store.read.of_type("OrderPlaced").each.to_a,
+      )
+    end
+
+    def test_read_filters_by_any_of_types
+      event_store = EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+      three = SecureRandom.uuid
+
+      event_store.append(
+        [
+          Event.new(id: one, type: "OrderPlaced", data: { total: 42 }, tags: {}),
+          Event.new(id: two, type: "PriceChanged", data: { value: 99 }, tags: {}),
+          Event.new(
+            id: three,
+            type: "OrderCancelled",
+            data: { reason: "dup" },
+            tags: {},
+          ),
+        ],
+      )
+
+      assert_equal(
+        [
+          Event.new(id: one, type: "OrderPlaced", data: { total: 42 }, tags: {}),
+          Event.new(
+            id: three,
+            type: "OrderCancelled",
+            data: { reason: "dup" },
+            tags: {},
+          ),
+        ],
+        event_store.read.of_type("OrderPlaced", "OrderCancelled").each.to_a,
+      )
+    end
   end
 end
