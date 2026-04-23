@@ -156,39 +156,13 @@ module En57
       with_event_store do |event_store|
         event_store.append(
           [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-              },
-            ),
-            Event.new(
-              id: ids[1],
-              type: "PriceChanged",
-              data: {
-                value: 99,
-              },
-              tags: {
-              },
-            ),
+            Event.new(id: ids[0], type: "OrderPlaced", data: { total: 42 }),
+            Event.new(id: ids[1], type: "PriceChanged", data: { value: 99 }),
           ],
         )
 
         assert_equal(
-          [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-              },
-            ),
-          ],
+          [Event.new(id: ids[0], type: "OrderPlaced", data: { total: 42 })],
           event_store.read.of_type("OrderPlaced").each.to_a,
         )
       end
@@ -198,31 +172,13 @@ module En57
       with_event_store do |event_store|
         event_store.append(
           [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-              },
-            ),
-            Event.new(
-              id: ids[1],
-              type: "PriceChanged",
-              data: {
-                value: 99,
-              },
-              tags: {
-              },
-            ),
+            Event.new(id: ids[0], type: "OrderPlaced", data: { total: 42 }),
+            Event.new(id: ids[1], type: "PriceChanged", data: { value: 99 }),
             Event.new(
               id: ids[2],
               type: "OrderCancelled",
               data: {
                 reason: "dup",
-              },
-              tags: {
               },
             ),
           ],
@@ -230,22 +186,12 @@ module En57
 
         assert_equal(
           [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-              },
-            ),
+            Event.new(id: ids[0], type: "OrderPlaced", data: { total: 42 }),
             Event.new(
               id: ids[2],
               type: "OrderCancelled",
               data: {
                 reason: "dup",
-              },
-              tags: {
               },
             ),
           ],
