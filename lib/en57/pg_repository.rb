@@ -31,7 +31,7 @@ module En57
       )
     end
 
-    def read
+    def read(_query)
       @connection
         .exec_params("SELECT id, type, data, meta, tags FROM read_events()", [])
         .map do |row|

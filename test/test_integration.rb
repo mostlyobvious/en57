@@ -38,7 +38,7 @@ module En57
               },
             ),
           ],
-          event_store.read,
+          event_store.read.each.to_a,
         )
       end
     end
@@ -68,7 +68,7 @@ module En57
               tags: { order_id: "123" },
             ),
           ],
-          event_store.read,
+          event_store.read.each.to_a,
         )
       end
     end

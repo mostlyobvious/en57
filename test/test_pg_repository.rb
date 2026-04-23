@@ -105,7 +105,7 @@ module En57
             tags: { order_id: "234" },
           ),
         ],
-        repository.read,
+        repository.read(Query.all),
       )
       connection.verify
     end

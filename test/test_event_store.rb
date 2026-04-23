@@ -24,7 +24,7 @@ module En57
       repository.verify
     end
 
-    def test_read_events
+    def test_read_returns_scope_for_query_all
       repository = Minitest::Mock.new
       events = [
         Event.new(
@@ -35,9 +35,13 @@ module En57
           },
         ),
       ]
-      repository.expect(:read, events)
+      repository.expect(:read, events, [Query.all])
 
-      assert_equal(events, EventStore.new(repository).read)
+      result = EventStore.new(repository).read
+
+      assert_instance_of(Scope, result)
+      assert_instance_of(Enumerator, result.each)
+      assert_equal(events, result.each.to_a)
       repository.verify
     end
   end

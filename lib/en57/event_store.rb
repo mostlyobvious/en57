@@ -11,7 +11,7 @@ module En57
     end
 
     def read
-      @repository.read
+      Scope.new(@repository, Query.all)
     end
   end
 end
