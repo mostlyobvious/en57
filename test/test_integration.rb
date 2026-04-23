@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "pg"
 require "pg_ephemeral"
 
 module En57
@@ -24,126 +23,49 @@ module En57
 
     def test_happy_path
       with_event_store do |event_store|
-        event_store.append(
-          [
-            Event.new(
-              id: ids[0],
-              type: "CredditToppedUp",
-              data: {
-                amount: 100,
-              },
-            ),
-            Event.new(
-              id: ids[1],
-              type: "CredditToppedUp",
-              data: {
-                amount: 50,
-              },
-            ),
-          ],
-        )
+        events = [
+          Event.new(id: ids[0], type: "CredditToppedUp", data: { amount: 100 }),
+          Event.new(id: ids[1], type: "CredditToppedUp", data: { amount: 50 }),
+        ]
 
-        assert_equal(
-          [
-            Event.new(
-              id: ids[0],
-              type: "CredditToppedUp",
-              data: {
-                amount: 100,
-              },
-            ),
-            Event.new(
-              id: ids[1],
-              type: "CredditToppedUp",
-              data: {
-                amount: 50,
-              },
-            ),
-          ],
-          event_store.read.each.to_a,
-        )
+        assert_equal(events, event_store.append(events).read.each.to_a)
       end
     end
 
     def test_tags_round_trip
       with_event_store do |event_store|
-        event_store.append(
-          [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-                order_id: "123",
-              },
-            ),
-          ],
-        )
+        event =
+          Event.new(id: ids[0], type: "OrderPlaced", tags: { order_id: "123" })
 
-        assert_equal(
-          [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-                order_id: "123",
-              },
-            ),
-          ],
-          event_store.read.each.to_a,
-        )
+        assert_equal([event], event_store.append([event]).read.each.to_a)
       end
     end
 
     def test_read_filters_by_tags
       with_event_store do |event_store|
-        event_store.append(
-          [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-                order_id: "123",
-                tenant_id: "acme",
-              },
-            ),
-            Event.new(
-              id: ids[1],
-              type: "OrderPlaced",
-              data: {
-                total: 99,
-              },
-              tags: {
-                order_id: "456",
-                tenant_id: "acme",
-              },
-            ),
-          ],
-        )
+        events = [
+          Event.new(
+            id: ids[0],
+            type: "OrderPlaced",
+            tags: {
+              order_id: "123",
+              tenant_id: "acme",
+            },
+          ),
+          Event.new(
+            id: ids[1],
+            type: "OrderPlaced",
+            tags: {
+              order_id: "456",
+              tenant_id: "acme",
+            },
+          ),
+        ]
 
         assert_equal(
-          [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-                order_id: "123",
-                tenant_id: "acme",
-              },
-            ),
-          ],
+          events.take(1),
           event_store
+            .append(events)
             .read
             .with_tag(order_id: "123", tenant_id: "acme")
             .each
@@ -154,103 +76,56 @@ module En57
 
     def test_read_filters_by_type
       with_event_store do |event_store|
-        event_store.append(
-          [
-            Event.new(id: ids[0], type: "OrderPlaced", data: { total: 42 }),
-            Event.new(id: ids[1], type: "PriceChanged", data: { value: 99 }),
-          ],
-        )
+        events = [
+          Event.new(id: ids[0], type: "OrderPlaced"),
+          Event.new(id: ids[1], type: "PriceChanged"),
+        ]
 
         assert_equal(
-          [Event.new(id: ids[0], type: "OrderPlaced", data: { total: 42 })],
-          event_store.read.of_type("OrderPlaced").each.to_a,
+          events.take(1),
+          event_store.append(events).read.of_type("OrderPlaced").each.to_a,
         )
       end
     end
 
     def test_read_filters_by_any_of_types
       with_event_store do |event_store|
-        event_store.append(
-          [
-            Event.new(id: ids[0], type: "OrderPlaced", data: { total: 42 }),
-            Event.new(id: ids[1], type: "PriceChanged", data: { value: 99 }),
-            Event.new(
-              id: ids[2],
-              type: "OrderCancelled",
-              data: {
-                reason: "dup",
-              },
-            ),
-          ],
-        )
+        events = [
+          Event.new(id: ids[0], type: "PriceChanged"),
+          Event.new(id: ids[1], type: "OrderPlaced"),
+          Event.new(id: ids[2], type: "OrderCancelled"),
+        ]
 
         assert_equal(
-          [
-            Event.new(id: ids[0], type: "OrderPlaced", data: { total: 42 }),
-            Event.new(
-              id: ids[2],
-              type: "OrderCancelled",
-              data: {
-                reason: "dup",
-              },
-            ),
-          ],
-          event_store.read.of_type("OrderPlaced", "OrderCancelled").each.to_a,
+          events.drop(1),
+          event_store
+            .append(events)
+            .read
+            .of_type("OrderPlaced", "OrderCancelled")
+            .each
+            .to_a,
         )
       end
     end
 
     def test_read_filters_by_type_and_tag_on_same_item
       with_event_store do |event_store|
-        event_store.append(
-          [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-                order_id: "123",
-              },
-            ),
-            Event.new(
-              id: ids[1],
-              type: "OrderPlaced",
-              data: {
-                total: 99,
-              },
-              tags: {
-                order_id: "456",
-              },
-            ),
-            Event.new(
-              id: ids[2],
-              type: "PriceChanged",
-              data: {
-                value: 10,
-              },
-              tags: {
-                order_id: "123",
-              },
-            ),
-          ],
-        )
+        events = [
+          Event.new(id: ids[0], type: "OrderPlaced", tags: { order_id: "123" }),
+          Event.new(id: ids[1], type: "OrderPlaced", tags: { order_id: "456" }),
+          Event.new(
+            id: ids[2],
+            type: "PriceChanged",
+            tags: {
+              order_id: "123",
+            },
+          ),
+        ]
 
         assert_equal(
-          [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-                order_id: "123",
-              },
-            ),
-          ],
+          events.take(1),
           event_store
+            .append(events)
             .read
             .of_type("OrderPlaced")
             .with_tag(order_id: "123")
@@ -262,80 +137,24 @@ module En57
 
     def test_read_or_combines_scopes_as_disjunction
       with_event_store do |event_store|
-        event_store.append(
-          [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-                order_id: "123",
-              },
-            ),
-            Event.new(
-              id: ids[1],
-              type: "OrderPlaced",
-              data: {
-                total: 99,
-              },
-              tags: {
-                order_id: "456",
-              },
-            ),
-            Event.new(
-              id: ids[2],
-              type: "PriceChanged",
-              data: {
-                value: 10,
-              },
-              tags: {
-                order_id: "999",
-              },
-            ),
-            Event.new(
-              id: ids[3],
-              type: "InventoryAdjusted",
-              data: {
-                delta: 1,
-              },
-              tags: {
-                sku: "A1",
-              },
-            ),
-          ],
-        )
+        events = [
+          Event.new(id: ids[0], type: "OrderPlaced", tags: { order_id: "123" }),
+          Event.new(id: ids[1], type: "OrderPlaced", tags: { order_id: "456" }),
+          Event.new(
+            id: ids[2],
+            type: "PriceChanged",
+            tags: {
+              order_id: "999",
+            },
+          ),
+          Event.new(id: ids[3], type: "InventoryAdjusted", tags: { sku: "A1" }),
+        ]
+        event_store.append(events)
 
-        orders =
-          event_store.read.of_type("OrderPlaced").with_tag(order_id: "123")
+        orders = event_store.read.with_tag(order_id: "123")
         prices = event_store.read.of_type("PriceChanged")
 
-        assert_equal(
-          [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                total: 42,
-              },
-              tags: {
-                order_id: "123",
-              },
-            ),
-            Event.new(
-              id: ids[2],
-              type: "PriceChanged",
-              data: {
-                value: 10,
-              },
-              tags: {
-                order_id: "999",
-              },
-            ),
-          ],
-          (orders | prices).each.to_a,
-        )
+        assert_equal(events.fetch_values(0, 2), (orders | prices).each.to_a)
       end
     end
   end
