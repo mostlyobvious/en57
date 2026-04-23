@@ -1,4 +1,5 @@
 CREATE TABLE events (
+    position bigint GENERATED ALWAYS AS IDENTITY,
     id uuid PRIMARY KEY,
     type text NOT NULL,
     data jsonb NOT NULL,
@@ -36,5 +37,7 @@ CREATE FUNCTION read_events ()
         data,
         meta
     FROM
-        events;
+        events
+    ORDER BY
+        position;
 $$;
