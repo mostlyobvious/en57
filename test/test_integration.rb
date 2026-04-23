@@ -37,7 +37,7 @@ module En57
               id: ids[1],
               type: "CredditToppedUp",
               data: {
-                "amount" => 50,
+                amount: 50,
               },
             ),
           ],
@@ -56,7 +56,7 @@ module En57
               id: ids[1],
               type: "CredditToppedUp",
               data: {
-                "amount" => 50,
+                amount: 50,
               },
             ),
           ],
