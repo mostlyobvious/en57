@@ -1,6 +1,7 @@
 SET client_min_messages = warning;
 
 CREATE TABLE IF NOT EXISTS events (
+    id uuid PRIMARY KEY,
     type TEXT NOT NULL,
     data jsonb NOT NULL,
     meta jsonb NOT NULL
@@ -9,6 +10,7 @@ CREATE TABLE IF NOT EXISTS events (
 DO $$
 BEGIN
     CREATE TYPE event AS (
+        id uuid,
         type TEXT,
         data jsonb,
         meta jsonb
@@ -23,8 +25,9 @@ CREATE OR REPLACE FUNCTION append_events (new_events event[])
     RETURNS void
     LANGUAGE SQL
     AS $$
-    INSERT INTO events (type, data, meta)
+    INSERT INTO events (id, type, data, meta)
     SELECT
+        e.id,
         e.type,
         e.data,
         e.meta
@@ -37,6 +40,7 @@ CREATE OR REPLACE FUNCTION read_events ()
     LANGUAGE SQL
     AS $$
     SELECT
+        id,
         type,
         data,
         meta

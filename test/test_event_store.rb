@@ -8,7 +8,15 @@ module En57
 
     def test_append_event
       repository = Minitest::Mock.new
-      events = [Event.new(type: "CredditToppedUp", data: { amount: 100 })]
+      events = [
+        Event.new(
+          id: SecureRandom.uuid,
+          type: "CredditToppedUp",
+          data: {
+            amount: 100,
+          },
+        ),
+      ]
       repository.expect(:append, nil, [events])
 
       EventStore.new(repository).append(events)
@@ -18,7 +26,15 @@ module En57
 
     def test_read_events
       repository = Minitest::Mock.new
-      events = [Event.new(type: "CredditToppedUp", data: { "amount" => 100 })]
+      events = [
+        Event.new(
+          id: SecureRandom.uuid,
+          type: "CredditToppedUp",
+          data: {
+            "amount" => 100,
+          },
+        ),
+      ]
       repository.expect(:read, events)
 
       assert_equal(events, EventStore.new(repository).read)

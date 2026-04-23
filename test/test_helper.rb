@@ -5,3 +5,4 @@ require "minitest/mock"
 require "mutant/minitest/coverage"
 
 require "en57"
+require "securerandom"

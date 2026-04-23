@@ -17,7 +17,9 @@ module En57
           array_encoder.encode(
             events.map do |event|
               serialized, description = @serializer.dump(event.data)
-              record_encoder.encode([event.type, serialized, description])
+              record_encoder.encode(
+                [event.id, event.type, serialized, description],
+              )
             end,
           ),
         ],
@@ -26,9 +28,10 @@ module En57
 
     def read
       @connection
-        .exec_params("SELECT type, data, meta FROM read_events()", [])
+        .exec_params("SELECT id, type, data, meta FROM read_events()", [])
         .map do |row|
           Event.new(
+            id: row.fetch("id"),
             type: row.fetch("type"),
             data: @serializer.load(row.fetch("data"), row.fetch("meta")),
           )

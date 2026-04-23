@@ -6,6 +6,9 @@ require "pg_ephemeral"
 
 module En57
   class TestIntegration < Minitest::Test
+    def one = @one ||= SecureRandom.uuid
+    def two = @two ||= SecureRandom.uuid
+
     def test_happy_path
       PgEphemeral.with_connection do |connection|
         event_store =
@@ -13,15 +16,27 @@ module En57
 
         event_store.append(
           [
-            Event.new(type: "CredditToppedUp", data: { amount: 100 }),
-            Event.new(type: "CredditToppedUp", data: { "amount" => 50 }),
+            Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
+            Event.new(
+              id: two,
+              type: "CredditToppedUp",
+              data: {
+                "amount" => 50,
+              },
+            ),
           ],
         )
 
         assert_equal(
           [
-            Event.new(type: "CredditToppedUp", data: { amount: 100 }),
-            Event.new(type: "CredditToppedUp", data: { "amount" => 50 }),
+            Event.new(id: one, type: "CredditToppedUp", data: { amount: 100 }),
+            Event.new(
+              id: two,
+              type: "CredditToppedUp",
+              data: {
+                "amount" => 50,
+              },
+            ),
           ],
           event_store.read,
         )
