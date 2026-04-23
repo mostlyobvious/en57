@@ -25,5 +25,11 @@ module En57
           items: [*existing_items[0...-1], yield(existing_items.last)],
         )
       end
+
+      def or(other)
+        return self.class.all if items.empty? || other.items.empty?
+
+        with(items: [*items, *other.items])
+      end
     end
 end

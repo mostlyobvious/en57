@@ -54,5 +54,27 @@ module En57
         query.refine_last { |item| item.with_tags(user_id: "42") },
       )
     end
+
+    def test_or_combines_items
+      left = Query.new(items: [QueryItem.new(types: ["A"], tags: { a: "1" })])
+      right = Query.new(items: [QueryItem.new(types: ["B"], tags: { b: "2" })])
+
+      assert_equal(
+        Query.new(
+          items: [
+            QueryItem.new(types: ["A"], tags: { a: "1" }),
+            QueryItem.new(types: ["B"], tags: { b: "2" }),
+          ],
+        ),
+        left.or(right),
+      )
+    end
+
+    def test_or_with_all_returns_all
+      left = Query.new(items: [QueryItem.new(types: ["A"], tags: { a: "1" })])
+
+      assert_equal(Query.all, left.or(Query.all))
+      assert_equal(Query.all, Query.all.or(left))
+    end
   end
 end

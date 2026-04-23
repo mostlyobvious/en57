@@ -26,5 +26,17 @@ module En57
         @query.refine_last { |item| item.with_types(types) },
       )
     end
+
+    def or(other)
+      self.class.new(@repository, @query.or(other.query))
+    end
+
+    def |(other)
+      self.or(other)
+    end
+
+    protected
+
+    attr_reader :query
   end
 end

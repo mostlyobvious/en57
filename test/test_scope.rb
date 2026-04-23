@@ -64,5 +64,50 @@ module En57
       assert_equal([], filtered_scope.each.to_a)
       repository.verify
     end
+
+    def test_or_combines_scope_queries
+      repository = Minitest::Mock.new
+      left = Scope.new(repository, Query.all).of_type("OrderPlaced")
+      right = Scope.new(repository, Query.all).with_tag(order_id: "123")
+      combined = left.or(right)
+
+      repository.expect(
+        :read,
+        [],
+        [
+          Query.new(
+            items: [
+              QueryItem.new(types: ["OrderPlaced"], tags: {}),
+              QueryItem.new(types: [], tags: { order_id: "123" }),
+            ],
+          ),
+        ],
+      )
+
+      assert_equal([], combined.each.to_a)
+      repository.verify
+    end
+
+    def test_pipe_aliases_or
+      repository = Minitest::Mock.new
+      left = Scope.new(repository, Query.all).of_type("OrderPlaced")
+      right = Scope.new(repository, Query.all).with_tag(order_id: "123")
+
+      repository.expect(
+        :read,
+        [],
+        [
+          Query.new(
+            items: [
+              QueryItem.new(types: ["OrderPlaced"], tags: {}),
+              QueryItem.new(types: [], tags: { order_id: "123" }),
+            ],
+          ),
+        ],
+      )
+
+      assert_equal([], (left | right).each.to_a)
+      repository.verify
+    end
   end
 end
