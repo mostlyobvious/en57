@@ -47,7 +47,16 @@ CREATE FUNCTION read_events (criteria jsonb[])
     RETURNS SETOF event_with_tags
     LANGUAGE SQL
     AS $$
-    WITH filtered_events AS (
+    WITH parsed_criteria AS (
+        SELECT
+            c,
+            c -> 'tags' AS tags,
+            ARRAY(
+                SELECT
+                    jsonb_array_elements_text(c -> 'types')) AS types
+        FROM
+            unnest(criteria) AS c),
+    filtered_events AS (
         SELECT
             e.position,
             e.id,
@@ -62,14 +71,15 @@ CREATE FUNCTION read_events (criteria jsonb[])
                 SELECT
                     1
                 FROM
-                    unnest(criteria) AS c
-                WHERE (c -> 'tags' IS NULL
-                    OR NOT EXISTS (
+                    parsed_criteria AS pc
+                WHERE
+                    (pc.c -> 'types' IS NULL
+                        OR e.type = ANY(pc.types))
+                    AND NOT EXISTS (
                         SELECT
                             1
                         FROM
-                            jsonb_each_text(c -> 'tags') AS f (key,
-                                value)
+                            jsonb_each_text(COALESCE(pc.tags, '{}'::jsonb)) AS req (key, value)
                         WHERE
                             NOT EXISTS (
                                 SELECT
@@ -78,26 +88,24 @@ CREATE FUNCTION read_events (criteria jsonb[])
                                     tags AS t
                                 WHERE
                                     t.event_id = e.id
-                                    AND t.key = f.key
-                                    AND t.value = f.value)))
-                        AND (c -> 'types' IS NULL
-                            OR e.type IN (
-                                SELECT
-                                    jsonb_array_elements_text(c -> 'types')))))
+                                    AND t.key = req.key
+                                    AND t.value = req.value))))
+    SELECT
+        e.id,
+        e.type,
+        e.data,
+        e.meta,
+        COALESCE(t.tags, '{}'::jsonb) AS tags
+    FROM
+        filtered_events AS e
+        LEFT JOIN LATERAL (
             SELECT
-                e.id,
-                e.type,
-                e.data,
-                e.meta,
-                COALESCE((
-                    SELECT
-                        jsonb_object_agg(t.key, t.value)
-                FROM tags AS t
+                jsonb_object_agg(t.key, t.value) AS tags
+            FROM
+                tags AS t
             WHERE
-                t.event_id = e.id), '{}'::jsonb)
-        FROM
-            filtered_events AS e
-        ORDER BY
-            e.position;
+                t.event_id = e.id) AS t ON TRUE
+    ORDER BY
+        e.position;
 $$;
 
