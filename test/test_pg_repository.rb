@@ -93,8 +93,8 @@ module En57
           },
         ],
         [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
-          [array_encoder.encode([]), array_encoder.encode([])],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+          [array_encoder.encode([])],
         ],
       )
 
@@ -144,11 +144,8 @@ module En57
           },
         ],
         [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
-          [
-            array_encoder.encode(['{"order_id":"123"}']),
-            array_encoder.encode(["[]"]),
-          ],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+          [array_encoder.encode(['{"types":[],"tags":{"order_id":"123"}}'])],
         ],
       )
 
@@ -187,8 +184,8 @@ module En57
           },
         ],
         [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
-          [array_encoder.encode(["{}"]), array_encoder.encode(["[]"])],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+          [array_encoder.encode(['{"types":[],"tags":{}}'])],
         ],
       )
 
@@ -233,10 +230,14 @@ module En57
           },
         ],
         [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
           [
-            array_encoder.encode(%w[{"order_id":"123"} {"order_id":"456"}]),
-            array_encoder.encode(["[]", "[]"]),
+            array_encoder.encode(
+              [
+                '{"types":[],"tags":{"order_id":"123"}}',
+                '{"types":[],"tags":{"order_id":"456"}}',
+              ],
+            ),
           ],
         ],
       )
@@ -277,11 +278,8 @@ module En57
           },
         ],
         [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
-          [
-            array_encoder.encode(["{}"]),
-            array_encoder.encode(['["OrderPlaced"]']),
-          ],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+          [array_encoder.encode(['{"types":["OrderPlaced"],"tags":{}}'])],
         ],
       )
 

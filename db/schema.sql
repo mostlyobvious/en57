@@ -43,7 +43,7 @@ FROM
     CROSS JOIN LATERAL jsonb_each_text(COALESCE(e.tags, '{}'::jsonb)) AS t;
 $$;
 
-CREATE FUNCTION read_events (tag_filters jsonb[], type_filters jsonb[])
+CREATE FUNCTION read_events (criteria jsonb[])
     RETURNS SETOF event_with_tags
     LANGUAGE SQL
     AS $$
@@ -56,34 +56,33 @@ CREATE FUNCTION read_events (tag_filters jsonb[], type_filters jsonb[])
             e.meta
         FROM
             events AS e
-        WHERE (cardinality(tag_filters) = 0
-            AND cardinality(type_filters) = 0)
-        OR EXISTS (
-            SELECT
-                1
-            FROM
-                generate_subscripts(tag_filters, 1) AS idx
-            WHERE (tag_filters[idx] = '{}'::jsonb
-                OR NOT EXISTS (
-                    SELECT
-                        1
-                    FROM
-                        jsonb_each_text(tag_filters[idx]) AS f (key,
-                            value)
-                    WHERE
-                        NOT EXISTS (
-                            SELECT
-                                1
-                            FROM
-                                tags AS t
-                            WHERE
-                                t.event_id = e.id
-                                AND t.key = f.key
-                                AND t.value = f.value)))
-                    AND (type_filters[idx] = '[]'::jsonb
+        WHERE cardinality(criteria) = 0
+            OR EXISTS (
+                SELECT
+                    1
+                FROM
+                    unnest(criteria) AS c
+                WHERE (c -> 'tags' = '{}'::jsonb
+                    OR NOT EXISTS (
+                        SELECT
+                            1
+                        FROM
+                            jsonb_each_text(c -> 'tags') AS f (key,
+                                value)
+                        WHERE
+                            NOT EXISTS (
+                                SELECT
+                                    1
+                                FROM
+                                    tags AS t
+                                WHERE
+                                    t.event_id = e.id
+                                    AND t.key = f.key
+                                    AND t.value = f.value)))
+                    AND (c -> 'types' = '[]'::jsonb
                         OR e.type IN (
                             SELECT
-                                jsonb_array_elements_text(type_filters[idx])))))
+                                jsonb_array_elements_text(c -> 'types')))))
         SELECT
             e.id,
             e.type,

@@ -33,16 +33,15 @@ module En57
     end
 
     def read(query)
-      tag_filters = query.items.map { |item| JSON.generate(item.tags) }
-      type_filters = query.items.map { |item| JSON.generate(item.types) }
+      criteria =
+        query.items.map do |item|
+          JSON.generate(types: item.types, tags: item.tags)
+        end
 
       @connection
         .exec_params(
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[], $2::jsonb[])",
-          [
-            @array_encoder.encode(tag_filters),
-            @array_encoder.encode(type_filters),
-          ],
+          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+          [@array_encoder.encode(criteria)],
         )
         .map do |row|
           Event.new(
