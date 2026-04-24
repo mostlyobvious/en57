@@ -7,8 +7,7 @@ module En57
     cover EventStore
 
     def credit_topped_up
-      @credit_topped_up ||=
-        Event.new(id: SecureRandom.uuid, type: "CredditToppedUp")
+      @credit_topped_up ||= Event.new(type: "CredditToppedUp")
     end
 
     def test_append_event

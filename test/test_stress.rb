@@ -23,7 +23,6 @@ module En57
       event_store.append(
         [
           Event.new(
-            id: SecureRandom.uuid,
             type: "CredditToppedUp",
             data: {
               amount: 100,
@@ -51,7 +50,6 @@ module En57
                 store.append(
                   [
                     Event.new(
-                      id: SecureRandom.uuid,
                       type: "CreditsUsed",
                       data: {
                         amount: 100,
