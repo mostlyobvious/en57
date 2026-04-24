@@ -13,6 +13,9 @@ CREATE TABLE tags (
     PRIMARY KEY (event_id, key)
 );
 
+CREATE INDEX events_type_idx ON events (type);
+CREATE INDEX tags_key_value_event_id_idx ON tags (key, value, event_id);
+
 CREATE TYPE event_with_tags AS (
     id uuid,
     type text,
