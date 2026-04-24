@@ -34,7 +34,7 @@ module En57
 
     def read(query)
       criteria =
-        query.items.map do |item|
+        query.criteria.map do |item|
           JSON.generate(types: item.types, tags: item.tags)
         end
 

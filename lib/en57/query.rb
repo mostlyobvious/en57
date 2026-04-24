@@ -15,19 +15,19 @@ module En57
     end
 
   Query =
-    Data.define(:items) do
-      def self.all = new(items: [])
+    Data.define(:criteria) do
+      def self.all = new(criteria: [])
 
       def refine_last
-        existing_items = items.empty? ? [QueryItem.all] : items
+        existing = criteria.empty? ? [QueryItem.all] : criteria
 
-        with(items: [*existing_items[0...-1], yield(existing_items.last)])
+        with(criteria: [*existing[0...-1], yield(existing.last)])
       end
 
       def or(other)
-        return self.class.all if items.empty? || other.items.empty?
+        return self.class.all if criteria.empty? || other.criteria.empty?
 
-        with(items: [*items, *other.items])
+        with(criteria: [*criteria, *other.criteria])
       end
     end
 end

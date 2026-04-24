@@ -130,7 +130,9 @@ module En57
 
     def test_read_events_filtered_by_tags
       query =
-        Query.new(items: [QueryItem.new(types: [], tags: { order_id: "123" })])
+        Query.new(
+          criteria: [QueryItem.new(types: [], tags: { order_id: "123" })],
+        )
       connection = Minitest::Mock.new
       connection.expect(
         :exec_params,
@@ -170,7 +172,7 @@ module En57
     end
 
     def test_read_events_with_wildcard_query_item
-      query = Query.new(items: [QueryItem.new(types: [], tags: {})])
+      query = Query.new(criteria: [QueryItem.new(types: [], tags: {})])
       connection = Minitest::Mock.new
       connection.expect(
         :exec_params,
@@ -212,7 +214,7 @@ module En57
     def test_read_events_with_or_tag_predicates
       query =
         Query.new(
-          items: [
+          criteria: [
             QueryItem.new(types: [], tags: { order_id: "123" }),
             QueryItem.new(types: [], tags: { order_id: "456" }),
           ],
@@ -264,7 +266,7 @@ module En57
 
     def test_read_events_filtered_by_type
       query =
-        Query.new(items: [QueryItem.new(types: ["OrderPlaced"], tags: {})])
+        Query.new(criteria: [QueryItem.new(types: ["OrderPlaced"], tags: {})])
       connection = Minitest::Mock.new
       connection.expect(
         :exec_params,

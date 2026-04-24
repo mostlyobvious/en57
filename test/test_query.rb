@@ -27,7 +27,9 @@ module En57
 
     def test_refine_last_starts_from_all_item
       assert_equal(
-        Query.new(items: [QueryItem.new(types: [], tags: { order_id: "123" })]),
+        Query.new(
+          criteria: [QueryItem.new(types: [], tags: { order_id: "123" })],
+        ),
         Query.all.refine_last { |item| item.with_tags(order_id: "123") },
       )
     end
@@ -35,7 +37,7 @@ module En57
     def test_refine_last_only_changes_last_item
       query =
         Query.new(
-          items: [
+          criteria: [
             QueryItem.new(types: ["A"], tags: { tenant_id: "acme" }),
             QueryItem.new(types: ["B"], tags: { order_id: "123" }),
           ],
@@ -43,7 +45,7 @@ module En57
 
       assert_equal(
         Query.new(
-          items: [
+          criteria: [
             QueryItem.new(types: ["A"], tags: { tenant_id: "acme" }),
             QueryItem.new(
               types: ["B"],
@@ -58,13 +60,15 @@ module En57
       )
     end
 
-    def test_or_combines_items
-      left = Query.new(items: [QueryItem.new(types: ["A"], tags: { a: "1" })])
-      right = Query.new(items: [QueryItem.new(types: ["B"], tags: { b: "2" })])
+    def test_or_combines_criteria
+      left =
+        Query.new(criteria: [QueryItem.new(types: ["A"], tags: { a: "1" })])
+      right =
+        Query.new(criteria: [QueryItem.new(types: ["B"], tags: { b: "2" })])
 
       assert_equal(
         Query.new(
-          items: [
+          criteria: [
             QueryItem.new(types: ["A"], tags: { a: "1" }),
             QueryItem.new(types: ["B"], tags: { b: "2" }),
           ],
@@ -74,7 +78,8 @@ module En57
     end
 
     def test_or_with_all_returns_all
-      left = Query.new(items: [QueryItem.new(types: ["A"], tags: { a: "1" })])
+      left =
+        Query.new(criteria: [QueryItem.new(types: ["A"], tags: { a: "1" })])
 
       assert_equal(Query.all, left.or(Query.all))
       assert_equal(Query.all, Query.all.or(left))

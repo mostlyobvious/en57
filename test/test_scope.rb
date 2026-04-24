@@ -36,7 +36,7 @@ module En57
         [],
         [
           Query.new(
-            items: [QueryItem.new(types: [], tags: { order_id: "123" })],
+            criteria: [QueryItem.new(types: [], tags: { order_id: "123" })],
           ),
         ],
       )
@@ -57,7 +57,7 @@ module En57
         [],
         [
           Query.new(
-            items: [
+            criteria: [
               QueryItem.new(types: %w[OrderPlaced OrderCancelled], tags: {}),
             ],
           ),
@@ -80,7 +80,7 @@ module En57
         [],
         [
           Query.new(
-            items: [
+            criteria: [
               QueryItem.new(types: ["OrderPlaced"], tags: {}),
               QueryItem.new(types: [], tags: { order_id: "123" }),
             ],
@@ -102,7 +102,7 @@ module En57
         [],
         [
           Query.new(
-            items: [
+            criteria: [
               QueryItem.new(types: ["OrderPlaced"], tags: {}),
               QueryItem.new(types: [], tags: { order_id: "123" }),
             ],
