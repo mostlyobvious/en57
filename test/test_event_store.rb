@@ -100,7 +100,7 @@ module En57
 
       event_store.append([credit_topped_up], fail_if:)
 
-      assert_equal({ fail_if: fail_if.query, after: nil }, repository.kwargs)
+      assert_equal({ fail_if: fail_if.to_query, after: nil }, repository.kwargs)
     end
 
     def test_append_accepts_query_for_fail_if

@@ -108,6 +108,45 @@ module En57
       repository.verify
     end
 
+    def test_merged_scope_each_without_block_returns_enumerator
+      repository = Minitest::Mock.new
+      merged =
+        Scope
+          .new(repository, Query.all)
+          .of_type("OrderPlaced")
+          .or(Scope.new(repository, Query.all).with_tag("order_id:123"))
+
+      assert_instance_of(Enumerator, merged.each)
+    end
+
+    def test_merged_scope_each_with_block_yields_events
+      repository = Minitest::Mock.new
+      merged =
+        Scope
+          .new(repository, Query.all)
+          .of_type("OrderPlaced")
+          .or(Scope.new(repository, Query.all).with_tag("order_id:123"))
+      yielded = []
+
+      repository.expect(
+        :read,
+        [1, 2],
+        [
+          Query.new(
+            criteria: [
+              Query::Criteria.new(types: ["OrderPlaced"], tags: []),
+              Query::Criteria.new(types: [], tags: ["order_id:123"]),
+            ],
+          ),
+        ],
+      )
+
+      merged.each { |event| yielded << event }
+
+      assert_equal([1, 2], yielded)
+      repository.verify
+    end
+
     def test_merged_scope_or_returns_merged_scope
       repository = Minitest::Mock.new
       scope = Scope.new(repository, Query.all)
@@ -168,6 +207,25 @@ module En57
           criteria: [Query::Criteria.new(types: [], tags: ["order_id:123"])],
         ),
         scope.to_query,
+      )
+    end
+
+    def test_merged_scope_exposes_to_query
+      repository = Minitest::Mock.new
+      merged =
+        Scope
+          .new(repository, Query.all)
+          .of_type("OrderPlaced")
+          .or(Scope.new(repository, Query.all).with_tag("order_id:123"))
+
+      assert_equal(
+        Query.new(
+          criteria: [
+            Query::Criteria.new(types: ["OrderPlaced"], tags: []),
+            Query::Criteria.new(types: [], tags: ["order_id:123"]),
+          ],
+        ),
+        merged.to_query,
       )
     end
   end
