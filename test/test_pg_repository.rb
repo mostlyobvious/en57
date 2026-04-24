@@ -52,7 +52,7 @@ module En57
             record_encoder.encode(
               [
                 ids[0],
-                "CredditToppedUp",
+                "CreditsToppedUp",
                 '{"amount":100}',
                 '{"amount":{"k":"Symbol"}}',
                 "{order_id:123}",
@@ -61,7 +61,7 @@ module En57
             record_encoder.encode(
               [
                 ids[1],
-                "CredditToppedUp",
+                "CreditsToppedUp",
                 '{"amount":50}',
                 '{"amount":{"k":"Symbol"}}',
                 "{order_id:234}",
@@ -76,7 +76,7 @@ module En57
         [
           Event.new(
             id: ids[0],
-            type: "CredditToppedUp",
+            type: "CreditsToppedUp",
             data: {
               amount: 100,
             },
@@ -84,7 +84,7 @@ module En57
           ),
           Event.new(
             id: ids[1],
-            type: "CredditToppedUp",
+            type: "CreditsToppedUp",
             data: {
               amount: 50,
             },
@@ -217,14 +217,14 @@ module En57
         [
           {
             "id" => ids[0],
-            "type" => "CredditToppedUp",
+            "type" => "CreditsToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
             "tags" => "{order_id:123}",
           },
           {
             "id" => ids[1],
-            "type" => "CredditToppedUp",
+            "type" => "CreditsToppedUp",
             "data" => '{"amount":50}',
             "meta" => "{}",
             "tags" => "{order_id:234}",
@@ -242,7 +242,7 @@ module En57
         [
           Event.new(
             id: ids[0],
-            type: "CredditToppedUp",
+            type: "CreditsToppedUp",
             data: {
               "amount" => 100,
             },
@@ -250,7 +250,7 @@ module En57
           ),
           Event.new(
             id: ids[1],
-            type: "CredditToppedUp",
+            type: "CreditsToppedUp",
             data: {
               "amount" => 50,
             },
@@ -273,7 +273,7 @@ module En57
         [
           {
             "id" => ids[0],
-            "type" => "CredditToppedUp",
+            "type" => "CreditsToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
             "tags" => "{order_id:123}",
@@ -291,7 +291,7 @@ module En57
         [
           Event.new(
             id: ids[0],
-            type: "CredditToppedUp",
+            type: "CreditsToppedUp",
             data: {
               "amount" => 100,
             },
@@ -311,7 +311,7 @@ module En57
         [
           {
             "id" => ids[0],
-            "type" => "CredditToppedUp",
+            "type" => "CreditsToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
             "tags" => "{order_id:123}",
@@ -329,7 +329,7 @@ module En57
         [
           Event.new(
             id: ids[0],
-            type: "CredditToppedUp",
+            type: "CreditsToppedUp",
             data: {
               "amount" => 100,
             },
@@ -355,7 +355,7 @@ module En57
         [
           {
             "id" => ids[0],
-            "type" => "CredditToppedUp",
+            "type" => "CreditsToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
             "tags" => "{order_id:123}",
@@ -377,7 +377,7 @@ module En57
         [
           Event.new(
             id: ids[0],
-            type: "CredditToppedUp",
+            type: "CreditsToppedUp",
             data: {
               "amount" => 100,
             },

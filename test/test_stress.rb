@@ -23,7 +23,7 @@ module En57
       event_store.append(
         [
           Event.new(
-            type: "CredditToppedUp",
+            type: "CreditsToppedUp",
             data: {
               amount: 100,
             },
@@ -89,7 +89,7 @@ module En57
         amount = event.data.fetch(:amount)
 
         case event.type
-        when "CredditToppedUp"
+        when "CreditsToppedUp"
           amount
         when "CreditsUsed"
           -amount

@@ -24,8 +24,8 @@ module En57
     def test_happy_path
       with_event_store do |event_store|
         events = [
-          Event.new(id: ids[0], type: "CredditToppedUp", data: { amount: 100 }),
-          Event.new(id: ids[1], type: "CredditToppedUp", data: { amount: 50 }),
+          Event.new(id: ids[0], type: "CreditsToppedUp", data: { amount: 100 }),
+          Event.new(id: ids[1], type: "CreditsToppedUp", data: { amount: 50 }),
         ]
 
         assert_equal(events, event_store.append(events).read.each.to_a)
