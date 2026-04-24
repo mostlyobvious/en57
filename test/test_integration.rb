@@ -148,10 +148,18 @@ module En57
             },
           ),
           Event.new(id: ids[3], type: "InventoryAdjusted", tags: { sku: "A1" }),
+          Event.new(
+            id: ids[4],
+            type: "ShipmentScheduled",
+            tags: {
+              order_id: "123",
+            },
+          ),
         ]
         event_store.append(events)
 
-        orders = event_store.read.with_tag(order_id: "123")
+        orders =
+          event_store.read.of_type("OrderPlaced").with_tag(order_id: "123")
         prices = event_store.read.of_type("PriceChanged")
 
         assert_equal(events.fetch_values(0, 2), (orders | prices).each.to_a)
