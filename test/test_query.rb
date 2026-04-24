@@ -9,9 +9,9 @@ module En57
     def test_refine_last_starts_from_all_item
       assert_equal(
         Query.new(
-          criteria: [Query::Criteria.new(types: [], tags: { order_id: "123" })],
+          criteria: [Query::Criteria.new(types: [], tags: ["order_id:123"])],
         ),
-        Query.all.refine_last { |item| item.with_tags(order_id: "123") },
+        Query.all.refine_last { |item| item.with_tags(["order_id:123"]) },
       )
     end
 
@@ -19,43 +19,36 @@ module En57
       query =
         Query.new(
           criteria: [
-            Query::Criteria.new(types: ["A"], tags: { tenant_id: "acme" }),
-            Query::Criteria.new(types: ["B"], tags: { order_id: "123" }),
+            Query::Criteria.new(types: ["A"], tags: ["tenant_id:acme"]),
+            Query::Criteria.new(types: ["B"], tags: ["order_id:123"]),
           ],
         )
 
       assert_equal(
         Query.new(
           criteria: [
-            Query::Criteria.new(types: ["A"], tags: { tenant_id: "acme" }),
+            Query::Criteria.new(types: ["A"], tags: ["tenant_id:acme"]),
             Query::Criteria.new(
               types: ["B"],
-              tags: {
-                order_id: "123",
-                user_id: "42",
-              },
+              tags: %w[order_id:123 user_id:42],
             ),
           ],
         ),
-        query.refine_last { |item| item.with_tags(user_id: "42") },
+        query.refine_last { |item| item.with_tags(["user_id:42"]) },
       )
     end
 
     def test_or_combines_criteria
       left =
-        Query.new(
-          criteria: [Query::Criteria.new(types: ["A"], tags: { a: "1" })],
-        )
+        Query.new(criteria: [Query::Criteria.new(types: ["A"], tags: ["a:1"])])
       right =
-        Query.new(
-          criteria: [Query::Criteria.new(types: ["B"], tags: { b: "2" })],
-        )
+        Query.new(criteria: [Query::Criteria.new(types: ["B"], tags: ["b:2"])])
 
       assert_equal(
         Query.new(
           criteria: [
-            Query::Criteria.new(types: ["A"], tags: { a: "1" }),
-            Query::Criteria.new(types: ["B"], tags: { b: "2" }),
+            Query::Criteria.new(types: ["A"], tags: ["a:1"]),
+            Query::Criteria.new(types: ["B"], tags: ["b:2"]),
           ],
         ),
         left.or(right),
@@ -64,9 +57,7 @@ module En57
 
     def test_or_with_all_returns_all
       left =
-        Query.new(
-          criteria: [Query::Criteria.new(types: ["A"], tags: { a: "1" })],
-        )
+        Query.new(criteria: [Query::Criteria.new(types: ["A"], tags: ["a:1"])])
 
       assert_equal(Query.all, left.or(Query.all))
       assert_equal(Query.all, Query.all.or(left))

@@ -33,9 +33,7 @@ module En57
         [],
         [
           Query.new(
-            criteria: [
-              Query::Criteria.new(types: [], tags: { order_id: "123" }),
-            ],
+            criteria: [Query::Criteria.new(types: [], tags: ["order_id:123"])],
           ),
         ],
       )
@@ -43,7 +41,7 @@ module En57
       assert_equal([], Scope.new(repository, Query.all).each.to_a)
       assert_equal(
         [],
-        Scope.new(repository, Query.all).with_tag(order_id: "123").each.to_a,
+        Scope.new(repository, Query.all).with_tag("order_id:123").each.to_a,
       )
       repository.verify
     end
@@ -60,8 +58,7 @@ module En57
             criteria: [
               Query::Criteria.new(
                 types: %w[OrderPlaced OrderCancelled],
-                tags: {
-                },
+                tags: [],
               ),
             ],
           ),
@@ -86,7 +83,7 @@ module En57
         Scope
           .new(repository, Query.all)
           .of_type("OrderPlaced")
-          .or(Scope.new(repository, Query.all).with_tag(order_id: "123"))
+          .or(Scope.new(repository, Query.all).with_tag("order_id:123"))
 
       assert_instance_of(MergedScope, combined)
 
@@ -96,8 +93,8 @@ module En57
         [
           Query.new(
             criteria: [
-              Query::Criteria.new(types: ["OrderPlaced"], tags: {}),
-              Query::Criteria.new(types: [], tags: { order_id: "123" }),
+              Query::Criteria.new(types: ["OrderPlaced"], tags: []),
+              Query::Criteria.new(types: [], tags: ["order_id:123"]),
             ],
           ),
         ],
@@ -113,8 +110,8 @@ module En57
       extended =
         scope
           .of_type("OrderPlaced")
-          .or(scope.with_tag(order_id: "123"))
-          .or(scope.with_tag(customer_id: "456"))
+          .or(scope.with_tag("order_id:123"))
+          .or(scope.with_tag("customer_id:456"))
 
       assert_instance_of(MergedScope, extended)
 
@@ -124,9 +121,9 @@ module En57
         [
           Query.new(
             criteria: [
-              Query::Criteria.new(types: ["OrderPlaced"], tags: {}),
-              Query::Criteria.new(types: [], tags: { order_id: "123" }),
-              Query::Criteria.new(types: [], tags: { customer_id: "456" }),
+              Query::Criteria.new(types: ["OrderPlaced"], tags: []),
+              Query::Criteria.new(types: [], tags: ["order_id:123"]),
+              Query::Criteria.new(types: [], tags: ["customer_id:456"]),
             ],
           ),
         ],
@@ -142,9 +139,9 @@ module En57
         Scope
           .new(repository, Query.all)
           .of_type("OrderPlaced")
-          .or(Scope.new(repository, Query.all).with_tag(order_id: "123"))
+          .or(Scope.new(repository, Query.all).with_tag("order_id:123"))
 
-      assert_raises(NoMethodError) { merged.with_tag(customer_id: "456") }
+      assert_raises(NoMethodError) { merged.with_tag("customer_id:456") }
       assert_raises(NoMethodError) { merged.of_type("OrderCancelled") }
     end
 
@@ -154,7 +151,7 @@ module En57
       assert_instance_of(
         MergedScope,
         Scope.new(repository, Query.all).of_type("OrderPlaced") |
-          Scope.new(repository, Query.all).with_tag(order_id: "123"),
+          Scope.new(repository, Query.all).with_tag("order_id:123"),
       )
     end
   end

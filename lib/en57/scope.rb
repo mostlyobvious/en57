@@ -23,7 +23,7 @@ module En57
         repository.read(query).each(&block)
       end
 
-      def with_tag(**tags)
+      def with_tag(*tags)
         with(query: query.refine_last { |item| item.with_tags(tags) })
       end
 

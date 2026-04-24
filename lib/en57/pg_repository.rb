@@ -52,7 +52,7 @@ module En57
             id: row.fetch("id"),
             type: row.fetch("type"),
             data: @serializer.load(row.fetch("data"), row.fetch("meta")),
-            tags: JSON.parse(row.fetch("tags"), symbolize_names: true),
+            tags: JSON.parse(row.fetch("tags")),
           )
         end
     end

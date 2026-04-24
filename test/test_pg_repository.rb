@@ -22,7 +22,7 @@ module En57
                 "CredditToppedUp",
                 '{"amount":100}',
                 '{"amount":{"k":"Symbol"}}',
-                '{"order_id":"123"}',
+                '["order_id:123"]',
               ],
             ),
             record_encoder.encode(
@@ -31,7 +31,7 @@ module En57
                 "CredditToppedUp",
                 '{"amount":50}',
                 '{"amount":{"k":"Symbol"}}',
-                '{"order_id":"234"}',
+                '["order_id:234"]',
               ],
             ),
           ],
@@ -52,9 +52,7 @@ module En57
             data: {
               amount: 100,
             },
-            tags: {
-              order_id: "123",
-            },
+            tags: ["order_id:123"],
           ),
           Event.new(
             id: ids[1],
@@ -62,9 +60,7 @@ module En57
             data: {
               amount: 50,
             },
-            tags: {
-              order_id: "234",
-            },
+            tags: ["order_id:234"],
           ),
         ],
       )
@@ -82,14 +78,14 @@ module En57
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => '{"order_id":"123"}',
+            "tags" => '["order_id:123"]',
           },
           {
             "id" => ids[1],
             "type" => "CredditToppedUp",
             "data" => '{"amount":50}',
             "meta" => "{}",
-            "tags" => '{"order_id":"234"}',
+            "tags" => '["order_id:234"]',
           },
         ],
         [
@@ -108,9 +104,7 @@ module En57
             data: {
               "amount" => 100,
             },
-            tags: {
-              order_id: "123",
-            },
+            tags: ["order_id:123"],
           ),
           Event.new(
             id: ids[1],
@@ -118,9 +112,7 @@ module En57
             data: {
               "amount" => 50,
             },
-            tags: {
-              order_id: "234",
-            },
+            tags: ["order_id:234"],
           ),
         ],
         repository.read(Query.all),
@@ -131,7 +123,7 @@ module En57
     def test_read_events_filtered_by_tags
       query =
         Query.new(
-          criteria: [Query::Criteria.new(types: [], tags: { order_id: "123" })],
+          criteria: [Query::Criteria.new(types: [], tags: ["order_id:123"])],
         )
       connection = Minitest::Mock.new
       connection.expect(
@@ -142,12 +134,12 @@ module En57
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => '{"order_id":"123"}',
+            "tags" => '["order_id:123"]',
           },
         ],
         [
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(['{"tags":{"order_id":"123"}}'])],
+          [array_encoder.encode(['{"tags":["order_id:123"]}'])],
         ],
       )
 
@@ -161,9 +153,7 @@ module En57
             data: {
               "amount" => 100,
             },
-            tags: {
-              order_id: "123",
-            },
+            tags: ["order_id:123"],
           ),
         ],
         repository.read(query),
@@ -172,7 +162,7 @@ module En57
     end
 
     def test_read_events_with_wildcard_query_item
-      query = Query.new(criteria: [Query::Criteria.new(types: [], tags: {})])
+      query = Query.new(criteria: [Query::Criteria.new(types: [], tags: [])])
       connection = Minitest::Mock.new
       connection.expect(
         :exec_params,
@@ -182,7 +172,7 @@ module En57
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => '{"order_id":"123"}',
+            "tags" => '["order_id:123"]',
           },
         ],
         [
@@ -201,9 +191,7 @@ module En57
             data: {
               "amount" => 100,
             },
-            tags: {
-              order_id: "123",
-            },
+            tags: ["order_id:123"],
           ),
         ],
         repository.read(query),
@@ -215,8 +203,8 @@ module En57
       query =
         Query.new(
           criteria: [
-            Query::Criteria.new(types: [], tags: { order_id: "123" }),
-            Query::Criteria.new(types: [], tags: { order_id: "456" }),
+            Query::Criteria.new(types: [], tags: ["order_id:123"]),
+            Query::Criteria.new(types: [], tags: ["order_id:456"]),
           ],
         )
       connection = Minitest::Mock.new
@@ -228,14 +216,14 @@ module En57
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => '{"order_id":"123"}',
+            "tags" => '["order_id:123"]',
           },
         ],
         [
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
           [
             array_encoder.encode(
-              %w[{"tags":{"order_id":"123"}} {"tags":{"order_id":"456"}}],
+              %w[{"tags":["order_id:123"]} {"tags":["order_id:456"]}],
             ),
           ],
         ],
@@ -251,9 +239,7 @@ module En57
             data: {
               "amount" => 100,
             },
-            tags: {
-              order_id: "123",
-            },
+            tags: ["order_id:123"],
           ),
         ],
         repository.read(query),
@@ -264,7 +250,7 @@ module En57
     def test_read_events_filtered_by_type
       query =
         Query.new(
-          criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: {})],
+          criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
         )
       connection = Minitest::Mock.new
       connection.expect(
@@ -275,7 +261,7 @@ module En57
             "type" => "OrderPlaced",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => "{}",
+            "tags" => "[]",
           },
         ],
         [
@@ -294,8 +280,7 @@ module En57
             data: {
               "amount" => 100,
             },
-            tags: {
-            },
+            tags: [],
           ),
         ],
         repository.read(query),

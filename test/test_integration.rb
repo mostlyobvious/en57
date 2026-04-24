@@ -35,7 +35,7 @@ module En57
     def test_tags_round_trip
       with_event_store do |event_store|
         event =
-          Event.new(id: ids[0], type: "OrderPlaced", tags: { order_id: "123" })
+          Event.new(id: ids[0], type: "OrderPlaced", tags: ["order_id:123"])
 
         assert_equal([event], event_store.append([event]).read.each.to_a)
       end
@@ -47,18 +47,12 @@ module En57
           Event.new(
             id: ids[0],
             type: "OrderPlaced",
-            tags: {
-              order_id: "123",
-              tenant_id: "acme",
-            },
+            tags: %w[order_id:123 tenant_id:acme],
           ),
           Event.new(
             id: ids[1],
             type: "OrderPlaced",
-            tags: {
-              order_id: "456",
-              tenant_id: "acme",
-            },
+            tags: %w[order_id:456 tenant_id:acme],
           ),
         ]
 
@@ -67,7 +61,7 @@ module En57
           event_store
             .append(events)
             .read
-            .with_tag(order_id: "123", tenant_id: "acme")
+            .with_tag("order_id:123", "tenant_id:acme")
             .each
             .to_a,
         )
@@ -111,15 +105,9 @@ module En57
     def test_read_filters_by_type_and_tag_on_same_item
       with_event_store do |event_store|
         events = [
-          Event.new(id: ids[0], type: "OrderPlaced", tags: { order_id: "123" }),
-          Event.new(id: ids[1], type: "OrderPlaced", tags: { order_id: "456" }),
-          Event.new(
-            id: ids[2],
-            type: "PriceChanged",
-            tags: {
-              order_id: "123",
-            },
-          ),
+          Event.new(id: ids[0], type: "OrderPlaced", tags: ["order_id:123"]),
+          Event.new(id: ids[1], type: "OrderPlaced", tags: ["order_id:456"]),
+          Event.new(id: ids[2], type: "PriceChanged", tags: ["order_id:123"]),
         ]
 
         assert_equal(
@@ -128,7 +116,7 @@ module En57
             .append(events)
             .read
             .of_type("OrderPlaced")
-            .with_tag(order_id: "123")
+            .with_tag("order_id:123")
             .each
             .to_a,
         )
@@ -138,28 +126,20 @@ module En57
     def test_read_or_combines_scopes_as_disjunction
       with_event_store do |event_store|
         events = [
-          Event.new(id: ids[0], type: "OrderPlaced", tags: { order_id: "123" }),
-          Event.new(id: ids[1], type: "OrderPlaced", tags: { order_id: "456" }),
-          Event.new(
-            id: ids[2],
-            type: "PriceChanged",
-            tags: {
-              order_id: "999",
-            },
-          ),
-          Event.new(id: ids[3], type: "InventoryAdjusted", tags: { sku: "A1" }),
+          Event.new(id: ids[0], type: "OrderPlaced", tags: ["order_id:123"]),
+          Event.new(id: ids[1], type: "OrderPlaced", tags: ["order_id:456"]),
+          Event.new(id: ids[2], type: "PriceChanged", tags: ["order_id:999"]),
+          Event.new(id: ids[3], type: "InventoryAdjusted", tags: ["sku:A1"]),
           Event.new(
             id: ids[4],
             type: "ShipmentScheduled",
-            tags: {
-              order_id: "123",
-            },
+            tags: ["order_id:123"],
           ),
         ]
         event_store.append(events)
 
         orders =
-          event_store.read.of_type("OrderPlaced").with_tag(order_id: "123")
+          event_store.read.of_type("OrderPlaced").with_tag("order_id:123")
         prices = event_store.read.of_type("PriceChanged")
 
         assert_equal(events.fetch_values(0, 2), (orders | prices).each.to_a)

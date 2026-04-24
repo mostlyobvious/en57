@@ -4,10 +4,10 @@ module En57
   class Query < Data.define(:criteria)
     Criteria =
       Data.define(:types, :tags) do
-        def self.all = new(types: [], tags: {})
+        def self.all = new(types: [], tags: [])
 
         def with_tags(tags)
-          with(tags: self.tags.merge(tags))
+          with(tags: [*self.tags, *tags])
         end
 
         def with_types(types)
