@@ -66,5 +66,59 @@ module En57
 
       assert_equal({ fail_if: Query.all, after: 42 }, repository.kwargs)
     end
+
+    def test_append_uses_empty_scope_for_default_fail_if
+      repository =
+        Class
+          .new do
+            attr_reader :kwargs
+
+            def append(*, **kwargs)
+              @kwargs = kwargs
+            end
+          end
+          .new
+
+      EventStore.new(repository).append([credit_topped_up])
+
+      assert_equal({ fail_if: Query.all, after: nil }, repository.kwargs)
+    end
+
+    def test_append_accepts_scope_for_fail_if
+      repository =
+        Class
+          .new do
+            attr_reader :kwargs
+
+            def append(*, **kwargs)
+              @kwargs = kwargs
+            end
+          end
+          .new
+      event_store = EventStore.new(repository)
+      fail_if = event_store.read.with_tag("order_id:123")
+
+      event_store.append([credit_topped_up], fail_if:)
+
+      assert_equal({ fail_if: fail_if.query, after: nil }, repository.kwargs)
+    end
+
+    def test_append_accepts_query_for_fail_if
+      repository =
+        Class
+          .new do
+            attr_reader :kwargs
+
+            def append(*, **kwargs)
+              @kwargs = kwargs
+            end
+          end
+          .new
+      fail_if = Query.new(criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])])
+
+      EventStore.new(repository).append([credit_topped_up], fail_if:)
+
+      assert_equal({ fail_if:, after: nil }, repository.kwargs)
+    end
   end
 end

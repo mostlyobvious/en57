@@ -59,7 +59,7 @@ module En57
                       tags: [account_tag],
                     ),
                   ],
-                  fail_if: account_scope.of_type("CreditsUsed").query,
+                  fail_if: account_scope.of_type("CreditsUsed"),
                 )
                 successes << true
               end

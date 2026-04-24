@@ -6,6 +6,10 @@ module En57
   class TestScope < Minitest::Test
     cover Scope
 
+    def test_empty_scope_returns_query_all
+      assert_equal(Query.all, EmptyScope.new.to_query)
+    end
+
     def test_each_without_block_returns_enumerator
       repository = Minitest::Mock.new
 
@@ -152,6 +156,18 @@ module En57
         MergedScope,
         Scope.new(repository, Query.all).of_type("OrderPlaced") |
           Scope.new(repository, Query.all).with_tag("order_id:123"),
+      )
+    end
+
+    def test_scope_exposes_to_query
+      repository = Minitest::Mock.new
+      scope = Scope.new(repository, Query.all).with_tag("order_id:123")
+
+      assert_equal(
+        Query.new(
+          criteria: [Query::Criteria.new(types: [], tags: ["order_id:123"])],
+        ),
+        scope.to_query,
       )
     end
   end
