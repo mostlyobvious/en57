@@ -43,7 +43,7 @@ module En57
       @connection.exec("ROLLBACK")
       sqlstate =
         e.result&.error_field(PG::Result::PG_DIAG_SQLSTATE) ||
-          (e.respond_to?(:sqlstate) ? e.sqlstate : nil)
+          (e.sqlstate if e.respond_to?(:sqlstate))
       raise AppendConditionViolated if sqlstate == "P0001"
 
       raise

@@ -34,6 +34,17 @@ module En57
         .new
     end
 
+    def pg_error(result_sqlstate: nil, sqlstate: nil)
+      error = PG::Error.new("boom")
+      result = Object.new
+      result.define_singleton_method(:error_field) do |field|
+        field == PG::Result::PG_DIAG_SQLSTATE ? result_sqlstate : nil
+      end
+      error.define_singleton_method(:result) { result_sqlstate.nil? ? nil : result }
+      error.define_singleton_method(:sqlstate) { sqlstate }
+      error
+    end
+
     def test_append_wraps_write_in_serializable_transaction
       expected_events =
         array_encoder.encode(
@@ -96,6 +107,84 @@ module En57
         ],
         connection.calls,
       )
+    end
+
+    def test_append_passes_fail_if_and_after_conditions
+      connection = spy_connection
+
+      repository = PgRepository.new(connection, JsonSerializer.new)
+      repository.append(
+        [],
+        fail_if:
+          Query.new(
+            criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
+          ),
+        after: 42,
+      )
+
+      assert_equal(
+        {
+          "fail_if_events_match" => [{ "types" => ["OrderPlaced"] }],
+          "after" => 42,
+        },
+        JSON.parse(connection.calls[1][2][1]),
+      )
+    end
+
+    def test_append_rolls_back_transaction_on_pg_failure
+      connection = spy_connection
+      connection.error = PG::Error.new("boom")
+
+      repository = PgRepository.new(connection, JsonSerializer.new)
+
+      assert_raises(PG::Error) do
+        repository.append([], fail_if: Query.all, after: nil)
+      end
+      assert_equal(
+        [
+          [:exec, "BEGIN ISOLATION LEVEL SERIALIZABLE"],
+          [
+            :exec_params,
+            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            [array_encoder.encode([]), "{}"],
+          ],
+          [:exec, "ROLLBACK"],
+        ],
+        connection.calls,
+      )
+    end
+
+    def test_append_raises_append_condition_violated_from_pg_result_sqlstate
+      connection = spy_connection
+      connection.error = pg_error(result_sqlstate: "P0001")
+
+      repository = PgRepository.new(connection, JsonSerializer.new)
+
+      assert_raises(AppendConditionViolated) do
+        repository.append([], fail_if: Query.all, after: nil)
+      end
+    end
+
+    def test_append_raises_append_condition_violated_from_pg_error_sqlstate
+      connection = spy_connection
+      connection.error = pg_error(sqlstate: "P0001")
+
+      repository = PgRepository.new(connection, JsonSerializer.new)
+
+      assert_raises(AppendConditionViolated) do
+        repository.append([], fail_if: Query.all, after: nil)
+      end
+    end
+
+    def test_append_reraises_pg_error_for_non_append_condition_sqlstate
+      connection = spy_connection
+      connection.error = pg_error(sqlstate: "23505")
+
+      repository = PgRepository.new(connection, JsonSerializer.new)
+
+      assert_raises(PG::Error) do
+        repository.append([], fail_if: Query.all, after: nil)
+      end
     end
 
     def test_append_rolls_back_transaction_on_failure
