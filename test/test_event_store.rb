@@ -114,7 +114,10 @@ module En57
             end
           end
           .new
-      fail_if = Query.new(criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])])
+      fail_if =
+        Query.new(
+          criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
+        )
 
       EventStore.new(repository).append([credit_topped_up], fail_if:)
 
