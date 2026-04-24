@@ -13,7 +13,7 @@ module En57
       SERVER.shutdown
     end
 
-    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid }
+    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
 
     def with_event_store =
       yield EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))

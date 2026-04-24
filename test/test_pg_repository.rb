@@ -6,7 +6,7 @@ module En57
   class TestPgRepository < Minitest::Test
     cover PgRepository
 
-    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid }
+    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
 
     def array_encoder = @array_encoder ||= PG::TextEncoder::Array.new
 

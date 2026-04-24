@@ -6,11 +6,11 @@ module En57
   class TestEvent < Minitest::Test
     cover Event
 
-    def test_generates_uuid_by_default
+    def test_generates_uuid_v7_by_default
       event = Event.new(type: "OrderPlaced")
 
       assert_match(
-        /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/,
+        /\A[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/,
         event.id,
       )
     end
