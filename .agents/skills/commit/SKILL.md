@@ -18,7 +18,6 @@ description: Create a git commit following project conventions. Use this skill w
 - Prefer `-` bullet points in the body over prose paragraphs. Hanging indent for wrapped lines.
 - Body explains **why** (and, when non-obvious, **how** and **what effects** — benchmarks, side effects, follow-ups). Skip questions that don't apply. Never restate the diff.
 - Prefer bullet point
-- Never apppend "Co-Authored-By"
 
 ## Scope
 
