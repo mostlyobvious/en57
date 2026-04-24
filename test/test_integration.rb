@@ -49,6 +49,24 @@ module En57
       )
     end
 
+    def test_append_with_fail_if_and_matches_raises_append_condition_violated
+      repository = PgRepository.new(CONNECTION, JsonSerializer.new)
+      existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+      repository.append([existing_event])
+
+      assert_raises(AppendConditionViolated) do
+        repository.append(
+          [Event.new(id: ids[1], type: "ShipmentScheduled")],
+          fail_if:
+            Query.new(
+              criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
+            ),
+        )
+      end
+
+      assert_equal([existing_event], repository.read(Query.all))
+    end
+
     def test_tags_round_trip
       with_event_store do |event_store|
         event =

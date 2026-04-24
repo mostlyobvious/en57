@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "en57/version"
+require_relative "en57/errors"
 require_relative "en57/event"
 require_relative "en57/json_serializer"
 require_relative "en57/query"

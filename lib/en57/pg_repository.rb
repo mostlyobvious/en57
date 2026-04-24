@@ -44,6 +44,14 @@ module En57
         [@array_encoder.encode(event_records), JSON.generate(append_condition)],
       )
       @connection.exec("COMMIT")
+    rescue PG::Error => e
+      @connection.exec("ROLLBACK")
+      sqlstate =
+        e.result&.error_field(PG::Result::PG_DIAG_SQLSTATE) ||
+          (e.respond_to?(:sqlstate) ? e.sqlstate : nil)
+      raise AppendConditionViolated if sqlstate == "P0001"
+
+      raise
     rescue StandardError
       @connection.exec("ROLLBACK")
       raise
