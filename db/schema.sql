@@ -56,7 +56,8 @@ CREATE FUNCTION read_events (criteria jsonb[])
             e.meta
         FROM
             events AS e
-        WHERE cardinality(criteria) = 0
+        WHERE
+            cardinality(criteria) = 0
             OR EXISTS (
                 SELECT
                     1
@@ -79,24 +80,24 @@ CREATE FUNCTION read_events (criteria jsonb[])
                                     t.event_id = e.id
                                     AND t.key = f.key
                                     AND t.value = f.value)))
-                    AND (c -> 'types' = '[]'::jsonb
-                        OR e.type IN (
-                            SELECT
-                                jsonb_array_elements_text(c -> 'types')))))
-        SELECT
-            e.id,
-            e.type,
-            e.data,
-            e.meta,
-            COALESCE((
-                SELECT
-                    jsonb_object_agg(t.key, t.value)
-            FROM tags AS t
-        WHERE
-            t.event_id = e.id), '{}'::jsonb)
-    FROM
-        filtered_events AS e
-    ORDER BY
-        e.position;
+                        AND (c -> 'types' = '[]'::jsonb
+                            OR e.type IN (
+                                SELECT
+                                    jsonb_array_elements_text(c -> 'types')))))
+            SELECT
+                e.id,
+                e.type,
+                e.data,
+                e.meta,
+                COALESCE((
+                    SELECT
+                        jsonb_object_agg(t.key, t.value)
+                FROM tags AS t
+            WHERE
+                t.event_id = e.id), '{}'::jsonb)
+        FROM
+            filtered_events AS e
+        ORDER BY
+            e.position;
 $$;
 
