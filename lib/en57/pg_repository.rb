@@ -27,10 +27,15 @@ module En57
           )
         end
 
+      @connection.exec("BEGIN ISOLATION LEVEL SERIALIZABLE")
       @connection.exec_params(
         "SELECT append_events($1::event_with_tags[])",
         [@array_encoder.encode(event_records)],
       )
+      @connection.exec("COMMIT")
+    rescue StandardError
+      @connection.exec("ROLLBACK")
+      raise
     end
 
     def read(query)
