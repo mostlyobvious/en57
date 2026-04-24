@@ -75,11 +75,13 @@ module En57
       repository.verify
     end
 
-    def test_or_combines_scope_queries
+    def test_scope_or_returns_merged_scope
       repository = Minitest::Mock.new
       left = Scope.new(repository, Query.all).of_type("OrderPlaced")
       right = Scope.new(repository, Query.all).with_tag(order_id: "123")
       combined = left.or(right)
+
+      assert_instance_of(MergedScope, combined)
 
       repository.expect(
         :read,
@@ -98,10 +100,13 @@ module En57
       repository.verify
     end
 
-    def test_pipe_aliases_or
+    def test_merged_scope_or_returns_merged_scope
       repository = Minitest::Mock.new
-      left = Scope.new(repository, Query.all).of_type("OrderPlaced")
-      right = Scope.new(repository, Query.all).with_tag(order_id: "123")
+      base = Scope.new(repository, Query.all)
+      merged = base.of_type("OrderPlaced").or(base.with_tag(order_id: "123"))
+      extended = merged.or(base.with_tag(customer_id: "456"))
+
+      assert_instance_of(MergedScope, extended)
 
       repository.expect(
         :read,
@@ -111,13 +116,31 @@ module En57
             criteria: [
               Query::Criteria.new(types: ["OrderPlaced"], tags: {}),
               Query::Criteria.new(types: [], tags: { order_id: "123" }),
+              Query::Criteria.new(types: [], tags: { customer_id: "456" }),
             ],
           ),
         ],
       )
 
-      assert_equal([], (left | right).each.to_a)
+      assert_equal([], extended.each.to_a)
       repository.verify
+    end
+
+    def test_merged_scope_cannot_be_refined_anymore
+      repository = Minitest::Mock.new
+      base = Scope.new(repository, Query.all)
+      merged = base.of_type("OrderPlaced").or(base.with_tag(order_id: "123"))
+
+      assert_raises(NoMethodError) { merged.with_tag(customer_id: "456") }
+      assert_raises(NoMethodError) { merged.of_type("OrderCancelled") }
+    end
+
+    def test_pipe_aliases_or
+      repository = Minitest::Mock.new
+      left = Scope.new(repository, Query.all).of_type("OrderPlaced")
+      right = Scope.new(repository, Query.all).with_tag(order_id: "123")
+
+      assert_instance_of(MergedScope, left | right)
     end
   end
 end

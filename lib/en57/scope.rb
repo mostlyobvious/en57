@@ -1,6 +1,20 @@
 # frozen_string_literal: true
 
 module En57
+  MergedScope =
+    Data.define(:repository, :query) do
+      def each(&block)
+        return enum_for unless block
+
+        repository.read(query).each(&block)
+      end
+
+      def or(other)
+        self.class.new(repository:, query: query.or(other.query))
+      end
+      alias_method :|, :or
+    end
+
   Scope =
     Data.define(:repository, :query) do
       def each(&block)
@@ -18,7 +32,7 @@ module En57
       end
 
       def or(other)
-        with(query: query.or(other.query))
+        MergedScope.new(repository:, query: query.or(other.query))
       end
       alias_method :|, :or
     end
