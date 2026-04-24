@@ -63,7 +63,7 @@ CREATE FUNCTION read_events (criteria jsonb[])
                     1
                 FROM
                     unnest(criteria) AS c
-                WHERE (c -> 'tags' = '{}'::jsonb
+                WHERE (c -> 'tags' IS NULL
                     OR NOT EXISTS (
                         SELECT
                             1
@@ -80,7 +80,7 @@ CREATE FUNCTION read_events (criteria jsonb[])
                                     t.event_id = e.id
                                     AND t.key = f.key
                                     AND t.value = f.value)))
-                        AND (c -> 'types' = '[]'::jsonb
+                        AND (c -> 'types' IS NULL
                             OR e.type IN (
                                 SELECT
                                     jsonb_array_elements_text(c -> 'types')))))

@@ -147,7 +147,7 @@ module En57
         ],
         [
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(['{"types":[],"tags":{"order_id":"123"}}'])],
+          [array_encoder.encode(['{"tags":{"order_id":"123"}}'])],
         ],
       )
 
@@ -187,7 +187,7 @@ module En57
         ],
         [
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(['{"types":[],"tags":{}}'])],
+          [array_encoder.encode(["{}"])],
         ],
       )
 
@@ -235,10 +235,7 @@ module En57
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
           [
             array_encoder.encode(
-              [
-                '{"types":[],"tags":{"order_id":"123"}}',
-                '{"types":[],"tags":{"order_id":"456"}}',
-              ],
+              %w[{"tags":{"order_id":"123"}} {"tags":{"order_id":"456"}}],
             ),
           ],
         ],
@@ -283,7 +280,7 @@ module En57
         ],
         [
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(['{"types":["OrderPlaced"],"tags":{}}'])],
+          [array_encoder.encode(['{"types":["OrderPlaced"]}'])],
         ],
       )
 

@@ -35,7 +35,11 @@ module En57
     def read(query)
       criteria =
         query.criteria.map do |item|
-          JSON.generate(types: item.types, tags: item.tags)
+          JSON.generate(
+            { types: item.types, tags: item.tags }.reject do |_, value|
+              value.empty?
+            end,
+          )
         end
 
       @connection
