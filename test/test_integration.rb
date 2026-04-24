@@ -41,6 +41,7 @@ module En57
           Query.new(
             criteria: [Query::Criteria.new(types: ["PriceChanged"], tags: [])],
           ),
+        after: nil,
       )
 
       assert_equal(
@@ -52,7 +53,7 @@ module En57
     def test_append_with_fail_if_and_matches_raises_append_condition_violated
       repository = PgRepository.new(CONNECTION, JsonSerializer.new)
       existing_event = Event.new(id: ids[0], type: "OrderPlaced")
-      repository.append([existing_event])
+      repository.append([existing_event], fail_if: Query.all, after: nil)
 
       assert_raises(AppendConditionViolated) do
         repository.append(
@@ -61,6 +62,7 @@ module En57
             Query.new(
               criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
             ),
+          after: nil,
         )
       end
 
@@ -70,7 +72,7 @@ module En57
     def test_append_with_after_ignores_matches_at_or_before_cutoff
       repository = PgRepository.new(CONNECTION, JsonSerializer.new)
       existing_event = Event.new(id: ids[0], type: "OrderPlaced")
-      repository.append([existing_event])
+      repository.append([existing_event], fail_if: Query.all, after: nil)
       after =
         Integer(
           CONNECTION.exec("SELECT max(position) AS position FROM events")[0][
@@ -96,7 +98,7 @@ module En57
     def test_append_with_after_raises_if_match_is_after_cutoff
       repository = PgRepository.new(CONNECTION, JsonSerializer.new)
       existing_event = Event.new(id: ids[0], type: "OrderPlaced")
-      repository.append([existing_event])
+      repository.append([existing_event], fail_if: Query.all, after: nil)
 
       assert_raises(AppendConditionViolated) do
         repository.append(

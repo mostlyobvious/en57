@@ -12,12 +12,22 @@ module En57
     end
 
     def test_append_event
-      repository = Minitest::Mock.new
-      repository.expect(:append, nil, [[credit_topped_up]])
+      repository =
+        Class
+          .new do
+            attr_reader :args, :kwargs
+
+            def append(*args, **kwargs)
+              @args = args
+              @kwargs = kwargs
+            end
+          end
+          .new
 
       EventStore.new(repository).append([credit_topped_up])
 
-      repository.verify
+      assert_equal([[credit_topped_up]], repository.args)
+      assert_equal({ fail_if: Query.all, after: nil }, repository.kwargs)
     end
 
     def test_read_returns_scope_for_query_all
@@ -33,14 +43,11 @@ module En57
     end
 
     def test_return_self_from_append
-      repository = Minitest::Mock.new
-      repository.expect(:append, nil, [[credit_topped_up]])
+      repository = Class.new { def append(*, **) = nil }.new
 
       event_store = EventStore.new(repository)
 
       assert_equal(event_store, event_store.append([credit_topped_up]))
-
-      repository.verify
     end
 
     def test_append_forwards_options
@@ -57,7 +64,7 @@ module En57
 
       EventStore.new(repository).append([credit_topped_up], after: 42)
 
-      assert_equal({ after: 42 }, repository.kwargs)
+      assert_equal({ fail_if: Query.all, after: 42 }, repository.kwargs)
     end
   end
 end

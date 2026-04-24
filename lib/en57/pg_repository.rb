@@ -12,7 +12,7 @@ module En57
       @array_decoder = PG::TextDecoder::Array.new
     end
 
-    def append(events, fail_if: Query.all, after: nil)
+    def append(events, fail_if:, after:)
       event_records =
         events.map do |event|
           serialized, description = @serializer.dump(event.data)

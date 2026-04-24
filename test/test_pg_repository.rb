@@ -80,6 +80,8 @@ module En57
             tags: ["order_id:234"],
           ),
         ],
+        fail_if: Query.all,
+        after: nil,
       )
 
       assert_equal(
@@ -102,7 +104,9 @@ module En57
 
       repository = PgRepository.new(connection, JsonSerializer.new)
 
-      assert_raises(RuntimeError) { repository.append([]) }
+      assert_raises(RuntimeError) do
+        repository.append([], fail_if: Query.all, after: nil)
+      end
       assert_equal(
         [
           [:exec, "BEGIN ISOLATION LEVEL SERIALIZABLE"],
