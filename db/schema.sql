@@ -26,8 +26,42 @@ CREATE TYPE event_with_tags AS (
 
 CREATE FUNCTION append_events (new_events event_with_tags[], append_condition jsonb DEFAULT '{}'::jsonb)
     RETURNS void
-    LANGUAGE SQL
+    LANGUAGE plpgsql
     AS $$
+DECLARE
+    criteria jsonb[] := ARRAY (
+        SELECT
+            jsonb_array_elements(COALESCE(append_condition -> 'fail_if_events_match', '[]'::jsonb)));
+BEGIN
+    IF cardinality(criteria) > 0 AND EXISTS (
+        SELECT
+            1
+        FROM
+            events AS e
+        WHERE
+            EXISTS (
+            SELECT
+                1
+            FROM
+                unnest(criteria) AS c
+            WHERE (c -> 'types' IS NULL OR e.type IN (
+            SELECT
+                jsonb_array_elements_text(c -> 'types'))) AND NOT EXISTS (
+        SELECT
+            1
+        FROM
+            jsonb_array_elements_text(COALESCE(c -> 'tags', '[]'::jsonb)) AS req (value)
+    WHERE
+        NOT EXISTS (
+        SELECT
+            1
+        FROM
+            tags AS t
+        WHERE
+            t.event_id = e.id AND t.value = req.value)))) THEN
+        RAISE EXCEPTION 'append_condition_violated'
+            USING ERRCODE = 'P0001';
+    END IF;
     INSERT INTO events (id, type, data, meta)
     SELECT
         e.id,
@@ -36,13 +70,14 @@ CREATE FUNCTION append_events (new_events event_with_tags[], append_condition js
         e.meta
     FROM
         unnest(new_events) AS e;
-INSERT INTO tags (event_id, value)
-SELECT
-    e.id,
-    t.value
-FROM
-    unnest(new_events) AS e
+    INSERT INTO tags (event_id, value)
+    SELECT
+        e.id,
+        t.value
+    FROM
+        unnest(new_events) AS e
     CROSS JOIN LATERAL unnest(COALESCE(e.tags, ARRAY[]::text[])) AS t (value);
+END;
 $$;
 
 CREATE FUNCTION read_events (criteria jsonb[])

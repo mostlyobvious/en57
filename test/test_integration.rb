@@ -32,6 +32,23 @@ module En57
       end
     end
 
+    def test_append_with_fail_if_and_no_matches_appends_events
+      repository = PgRepository.new(CONNECTION, JsonSerializer.new)
+
+      repository.append(
+        [Event.new(id: ids[0], type: "OrderPlaced")],
+        fail_if:
+          Query.new(
+            criteria: [Query::Criteria.new(types: ["PriceChanged"], tags: [])],
+          ),
+      )
+
+      assert_equal(
+        [Event.new(id: ids[0], type: "OrderPlaced")],
+        repository.read(Query.all),
+      )
+    end
+
     def test_tags_round_trip
       with_event_store do |event_store|
         event =

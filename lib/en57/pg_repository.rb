@@ -12,7 +12,7 @@ module En57
       @array_decoder = PG::TextDecoder::Array.new
     end
 
-    def append(events)
+    def append(events, fail_if: Query.all, after: nil)
       event_records =
         events.map do |event|
           serialized, description = @serializer.dump(event.data)
@@ -26,11 +26,22 @@ module En57
             ],
           )
         end
+      append_condition = {}
+      fail_if_events_match =
+        fail_if.criteria.map do |item|
+          { types: item.types, tags: item.tags }.reject do |_, value|
+            value.empty?
+          end
+        end
+      append_condition[
+        :fail_if_events_match
+      ] = fail_if_events_match unless fail_if_events_match.empty?
+      append_condition[:after] = after unless after.nil?
 
       @connection.exec("BEGIN ISOLATION LEVEL SERIALIZABLE")
       @connection.exec_params(
         "SELECT append_events($1::event_with_tags[], $2::jsonb)",
-        [@array_encoder.encode(event_records), "{}"],
+        [@array_encoder.encode(event_records), JSON.generate(append_condition)],
       )
       @connection.exec("COMMIT")
     rescue StandardError
