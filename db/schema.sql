@@ -32,33 +32,33 @@ DECLARE
     criteria jsonb[] := ARRAY (
         SELECT
             jsonb_array_elements(COALESCE(append_condition -> 'fail_if_events_match', '[]'::jsonb)));
+    after_pos bigint := (append_condition ->> 'after')::bigint;
 BEGIN
     IF cardinality(criteria) > 0 AND EXISTS (
         SELECT
             1
         FROM
             events AS e
-        WHERE
-            EXISTS (
-            SELECT
-                1
-            FROM
-                unnest(criteria) AS c
-            WHERE (c -> 'types' IS NULL OR e.type IN (
-            SELECT
-                jsonb_array_elements_text(c -> 'types'))) AND NOT EXISTS (
-        SELECT
-            1
-        FROM
-            jsonb_array_elements_text(COALESCE(c -> 'tags', '[]'::jsonb)) AS req (value)
+        WHERE (after_pos IS NULL OR e.position > after_pos) AND EXISTS (
+    SELECT
+        1
+    FROM
+        unnest(criteria) AS c
+    WHERE (c -> 'types' IS NULL OR e.type IN (
+    SELECT
+        jsonb_array_elements_text(c -> 'types'))) AND NOT EXISTS (
+SELECT
+    1
+FROM
+    jsonb_array_elements_text(COALESCE(c -> 'tags', '[]'::jsonb)) AS req (value)
+WHERE
+    NOT EXISTS (
+    SELECT
+        1
+    FROM
+        tags AS t
     WHERE
-        NOT EXISTS (
-        SELECT
-            1
-        FROM
-            tags AS t
-        WHERE
-            t.event_id = e.id AND t.value = req.value)))) THEN
+        t.event_id = e.id AND t.value = req.value)))) THEN
         RAISE EXCEPTION 'append_condition_violated'
             USING ERRCODE = 'P0001';
     END IF;

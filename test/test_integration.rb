@@ -67,6 +67,51 @@ module En57
       assert_equal([existing_event], repository.read(Query.all))
     end
 
+    def test_append_with_after_ignores_matches_at_or_before_cutoff
+      repository = PgRepository.new(CONNECTION, JsonSerializer.new)
+      existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+      repository.append([existing_event])
+      after =
+        Integer(
+          CONNECTION.exec("SELECT max(position) AS position FROM events")[0][
+            "position"
+          ],
+        )
+
+      repository.append(
+        [Event.new(id: ids[1], type: "ShipmentScheduled")],
+        fail_if:
+          Query.new(
+            criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
+          ),
+        after:,
+      )
+
+      assert_equal(
+        [existing_event, Event.new(id: ids[1], type: "ShipmentScheduled")],
+        repository.read(Query.all),
+      )
+    end
+
+    def test_append_with_after_raises_if_match_is_after_cutoff
+      repository = PgRepository.new(CONNECTION, JsonSerializer.new)
+      existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+      repository.append([existing_event])
+
+      assert_raises(AppendConditionViolated) do
+        repository.append(
+          [Event.new(id: ids[1], type: "ShipmentScheduled")],
+          fail_if:
+            Query.new(
+              criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
+            ),
+          after: 0,
+        )
+      end
+
+      assert_equal([existing_event], repository.read(Query.all))
+    end
+
     def test_tags_round_trip
       with_event_store do |event_store|
         event =
