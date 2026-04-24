@@ -20,9 +20,9 @@ FROM
     read_events (ARRAY['{"types":["OrderPlaced"],"tags":["order_id:123"]}'::jsonb, '{"types":["PriceChanged"]}'::jsonb])
 ORDER BY
     id;
-                  id                  |     type     |       tags       
---------------------------------------+--------------+------------------
- 00000000-0000-0000-0000-000000000001 | OrderPlaced  | ["order_id:123"]
- 00000000-0000-0000-0000-000000000003 | PriceChanged | ["order_id:999"]
+                  id                  |     type     |      tags      
+--------------------------------------+--------------+----------------
+ 00000000-0000-0000-0000-000000000001 | OrderPlaced  | {order_id:123}
+ 00000000-0000-0000-0000-000000000003 | PriceChanged | {order_id:999}
 (2 rows)
 

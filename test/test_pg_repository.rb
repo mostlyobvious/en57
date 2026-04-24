@@ -22,7 +22,7 @@ module En57
                 "CredditToppedUp",
                 '{"amount":100}',
                 '{"amount":{"k":"Symbol"}}',
-                '["order_id:123"]',
+                "{order_id:123}",
               ],
             ),
             record_encoder.encode(
@@ -31,7 +31,7 @@ module En57
                 "CredditToppedUp",
                 '{"amount":50}',
                 '{"amount":{"k":"Symbol"}}',
-                '["order_id:234"]',
+                "{order_id:234}",
               ],
             ),
           ],
@@ -78,14 +78,14 @@ module En57
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => '["order_id:123"]',
+            "tags" => "{order_id:123}",
           },
           {
             "id" => ids[1],
             "type" => "CredditToppedUp",
             "data" => '{"amount":50}',
             "meta" => "{}",
-            "tags" => '["order_id:234"]',
+            "tags" => "{order_id:234}",
           },
         ],
         [
@@ -134,7 +134,7 @@ module En57
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => '["order_id:123"]',
+            "tags" => "{order_id:123}",
           },
         ],
         [
@@ -172,7 +172,7 @@ module En57
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => '["order_id:123"]',
+            "tags" => "{order_id:123}",
           },
         ],
         [
@@ -216,7 +216,7 @@ module En57
             "type" => "CredditToppedUp",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => '["order_id:123"]',
+            "tags" => "{order_id:123}",
           },
         ],
         [
@@ -261,7 +261,7 @@ module En57
             "type" => "OrderPlaced",
             "data" => '{"amount":100}',
             "meta" => "{}",
-            "tags" => "[]",
+            "tags" => "{}",
           },
         ],
         [

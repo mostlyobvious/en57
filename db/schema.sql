@@ -21,7 +21,7 @@ CREATE TYPE event_with_tags AS (
     type text,
     data jsonb,
     meta jsonb,
-    tags jsonb
+    tags text[]
 );
 
 CREATE FUNCTION append_events (new_events event_with_tags[])
@@ -42,7 +42,7 @@ SELECT
     t.value
 FROM
     unnest(new_events) AS e
-    CROSS JOIN LATERAL jsonb_array_elements_text(COALESCE(e.tags, '[]'::jsonb)) AS t (value);
+    CROSS JOIN LATERAL unnest(COALESCE(e.tags, ARRAY[]::text[])) AS t (value);
 $$;
 
 CREATE FUNCTION read_events (criteria jsonb[])
@@ -96,12 +96,12 @@ filtered_events AS (
         e.type,
         e.data,
         e.meta,
-        COALESCE(t.tags, '[]'::jsonb) AS tags
+        COALESCE(t.tags, ARRAY[]::text[]) AS tags
 FROM
     filtered_events AS e
     LEFT JOIN LATERAL (
         SELECT
-            jsonb_agg(t.value ORDER BY t.value) AS tags
+            array_agg(t.value ORDER BY t.value) AS tags
         FROM
             tags AS t
         WHERE

@@ -9,6 +9,7 @@ module En57
       @serializer = serializer
       @record_encoder = PG::TextEncoder::Record.new
       @array_encoder = PG::TextEncoder::Array.new
+      @array_decoder = PG::TextDecoder::Array.new
     end
 
     def append(events)
@@ -21,7 +22,7 @@ module En57
               event.type,
               serialized,
               description,
-              JSON.generate(event.tags),
+              @array_encoder.encode(event.tags),
             ],
           )
         end
@@ -52,7 +53,7 @@ module En57
             id: row.fetch("id"),
             type: row.fetch("type"),
             data: @serializer.load(row.fetch("data"), row.fetch("meta")),
-            tags: JSON.parse(row.fetch("tags")),
+            tags: @array_decoder.decode(row.fetch("tags")),
           )
         end
     end
