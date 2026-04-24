@@ -40,7 +40,9 @@ module En57
       result.define_singleton_method(:error_field) do |field|
         field == PG::Result::PG_DIAG_SQLSTATE ? result_sqlstate : nil
       end
-      error.define_singleton_method(:result) { result_sqlstate.nil? ? nil : result }
+      error.define_singleton_method(:result) do
+        result_sqlstate.nil? ? nil : result
+      end
       error.define_singleton_method(:sqlstate) { sqlstate }
       error
     end
