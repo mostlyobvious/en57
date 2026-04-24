@@ -87,8 +87,8 @@ module En57
           [:exec, "BEGIN ISOLATION LEVEL SERIALIZABLE"],
           [
             :exec_params,
-            "SELECT append_events($1::event_with_tags[])",
-            [expected_events],
+            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            [expected_events, "{}"],
           ],
           [:exec, "COMMIT"],
         ],
@@ -108,8 +108,8 @@ module En57
           [:exec, "BEGIN ISOLATION LEVEL SERIALIZABLE"],
           [
             :exec_params,
-            "SELECT append_events($1::event_with_tags[])",
-            [array_encoder.encode([])],
+            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            [array_encoder.encode([]), "{}"],
           ],
           [:exec, "ROLLBACK"],
         ],

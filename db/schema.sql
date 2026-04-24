@@ -24,7 +24,7 @@ CREATE TYPE event_with_tags AS (
     tags text[]
 );
 
-CREATE FUNCTION append_events (new_events event_with_tags[])
+CREATE FUNCTION append_events (new_events event_with_tags[], append_condition jsonb DEFAULT '{}'::jsonb)
     RETURNS void
     LANGUAGE SQL
     AS $$

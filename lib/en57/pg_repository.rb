@@ -29,8 +29,8 @@ module En57
 
       @connection.exec("BEGIN ISOLATION LEVEL SERIALIZABLE")
       @connection.exec_params(
-        "SELECT append_events($1::event_with_tags[])",
-        [@array_encoder.encode(event_records)],
+        "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+        [@array_encoder.encode(event_records), "{}"],
       )
       @connection.exec("COMMIT")
     rescue StandardError
