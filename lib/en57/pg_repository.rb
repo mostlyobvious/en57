@@ -27,12 +27,7 @@ module En57
           )
         end
       append_condition = {}
-      fail_if_events_match =
-        fail_if.criteria.map do |item|
-          { types: item.types, tags: item.tags }.reject do |_, value|
-            value.empty?
-          end
-        end
+      fail_if_events_match = fail_if.encoded_criteria
       append_condition[
         :fail_if_events_match
       ] = fail_if_events_match unless fail_if_events_match.empty?
@@ -58,14 +53,7 @@ module En57
     end
 
     def read(query)
-      criteria =
-        query.criteria.map do |item|
-          JSON.generate(
-            { types: item.types, tags: item.tags }.reject do |_, value|
-              value.empty?
-            end,
-          )
-        end
+      criteria = query.encoded_criteria.map { |item| JSON.generate(item) }
 
       @connection
         .exec_params(

@@ -13,7 +13,13 @@ module En57
         def with_types(types)
           with(types: [*self.types, *types].uniq)
         end
+
+        def matcher
+          { types:, tags: }.reject { |_, value| value.empty? }
+        end
       end
+
+    def encoded_criteria = criteria.map(&:matcher)
 
     def self.all = new(criteria: [])
 

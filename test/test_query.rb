@@ -62,5 +62,21 @@ module En57
       assert_equal(Query.all, left.or(Query.all))
       assert_equal(Query.all, Query.all.or(left))
     end
+
+    def test_encoded_criteria_omits_empty_fields
+      query =
+        Query.new(
+          criteria: [
+            Query::Criteria.new(types: ["OrderPlaced"], tags: []),
+            Query::Criteria.new(types: [], tags: ["order_id:123"]),
+            Query::Criteria.new(types: [], tags: []),
+          ],
+        )
+
+      assert_equal(
+        [{ types: ["OrderPlaced"] }, { tags: ["order_id:123"] }, {}],
+        query.encoded_criteria,
+      )
+    end
   end
 end
