@@ -7,12 +7,12 @@ DCB-compatible event store library in Ruby with support for PostgreSQL.
 ### Connect to PostgreSQL
 
 ```ruby
-store = 
+store =
   En57::EventStore.new(
     En57::PgRepository.new(
-      PG.connect("postgres://localhost:5432/en57")
-      En57::JsonSerializer.new
-    )
+      PG.connect("postgres://localhost:5432/en57"),
+      En57::JsonSerializer.new,
+    ),
   )
 ```
 
@@ -22,7 +22,6 @@ store =
 store.append(
   [
     En57::Event.new(
-      id: SecureRandom.uuid,
       type: "OrderPlaced",
       data: { amount: 100 },
       tags: ["order_id:123", "customer:42"],
@@ -63,13 +62,12 @@ begin
   store.append(
     [
       En57::Event.new(
-        id: SecureRandom.uuid,
         type: "CreditsUsed",
         data: { amount: 100 },
         tags: ["account:x"],
       ),
     ],
-    fail_if: account_scope.of_type("CreditsUsed").query,
+    fail_if: account_scope.of_type("CreditsUsed"),
   )
 rescue En57::AppendConditionViolated, PG::TRSerializationFailure
   # lost the race; another writer already consumed credits
@@ -87,13 +85,12 @@ begin
   store.append(
     [
       En57::Event.new(
-        id: SecureRandom.uuid,
         type: "UserRegistered",
         data: { name: "Alice" },
         tags: [email_tag],
       ),
     ],
-    fail_if: store.read.with_tag(email_tag).query,
+    fail_if: store.read.with_tag(email_tag),
   )
 rescue En57::AppendConditionViolated
   # email already used
