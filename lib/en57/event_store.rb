@@ -6,8 +6,8 @@ module En57
       @repository = repository
     end
 
-    def append(events)
-      @repository.append(events)
+    def append(events, **options)
+      @repository.append(events, **options)
       self
     end
 

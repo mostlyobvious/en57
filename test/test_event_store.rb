@@ -42,5 +42,22 @@ module En57
 
       repository.verify
     end
+
+    def test_append_forwards_options
+      repository =
+        Class
+          .new do
+            attr_reader :kwargs
+
+            def append(*, **kwargs)
+              @kwargs = kwargs
+            end
+          end
+          .new
+
+      EventStore.new(repository).append([credit_topped_up], after: 42)
+
+      assert_equal({ after: 42 }, repository.kwargs)
+    end
   end
 end
