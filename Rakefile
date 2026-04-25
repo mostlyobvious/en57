@@ -19,6 +19,11 @@ def pg_regress_bin
   end
 end
 
+task :format do
+  system("stree write **/*.rb")
+  system("pg_format -i db/*.sql")
+end
+
 task :mutate do
   system("bin/mutant run")
 end
