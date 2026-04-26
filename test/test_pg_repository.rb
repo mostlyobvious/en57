@@ -6,47 +6,6 @@ module En57
   class TestPgRepository < Minitest::Test
     cover PgRepository
 
-    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
-
-    def array_encoder = @array_encoder ||= PG::TextEncoder::Array.new
-
-    def record_encoder = @record_encoder ||= PG::TextEncoder::Record.new
-
-    def spy_connection
-      Class
-        .new do
-          attr_accessor :error
-          attr_reader :calls
-
-          def initialize
-            @calls = []
-          end
-
-          def exec(sql)
-            @calls << [:exec, sql]
-          end
-
-          def exec_params(sql, params)
-            @calls << [:exec_params, sql, params]
-            raise error if error
-          end
-        end
-        .new
-    end
-
-    def pg_error(result_sqlstate: nil, sqlstate: nil)
-      error = PG::Error.new("boom")
-      result = Object.new
-      result.define_singleton_method(:error_field) do |field|
-        field == PG::Result::PG_DIAG_SQLSTATE ? result_sqlstate : nil
-      end
-      error.define_singleton_method(:result) do
-        result_sqlstate.nil? ? nil : result
-      end
-      error.define_singleton_method(:sqlstate) { sqlstate }
-      error
-    end
-
     def test_append_wraps_write_in_serializable_transaction
       expected_events =
         array_encoder.encode(
@@ -430,6 +389,49 @@ module En57
         repository.read(query),
       )
       connection.verify
+    end
+
+    private
+
+    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
+
+    def array_encoder = @array_encoder ||= PG::TextEncoder::Array.new
+
+    def record_encoder = @record_encoder ||= PG::TextEncoder::Record.new
+
+    def spy_connection
+      Class
+        .new do
+          attr_accessor :error
+          attr_reader :calls
+
+          def initialize
+            @calls = []
+          end
+
+          def exec(sql)
+            @calls << [:exec, sql]
+          end
+
+          def exec_params(sql, params)
+            @calls << [:exec_params, sql, params]
+            raise error if error
+          end
+        end
+        .new
+    end
+
+    def pg_error(result_sqlstate: nil, sqlstate: nil)
+      error = PG::Error.new("boom")
+      result = Object.new
+      result.define_singleton_method(:error_field) do |field|
+        field == PG::Result::PG_DIAG_SQLSTATE ? result_sqlstate : nil
+      end
+      error.define_singleton_method(:result) do
+        result_sqlstate.nil? ? nil : result
+      end
+      error.define_singleton_method(:sqlstate) { sqlstate }
+      error
     end
   end
 end
