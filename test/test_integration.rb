@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestIntegration < Minitest::Test
+  class TestIntegration < IntegrationTest
     def test_happy_path
       with_event_store do |event_store|
         events = [
@@ -197,8 +197,5 @@ module En57
 
     def with_event_store =
       yield EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))
-
-    def setup =
-      CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
   end
 end

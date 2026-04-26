@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestStress < Minitest::Test
+  class TestStress < IntegrationTest
     def test_only_one_writer_can_consume_account_credits
       with_event_store do |event_store|
         event_store.append(
@@ -54,9 +54,6 @@ module En57
     end
 
     private
-
-    def setup =
-      CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
 
     def with_event_store =
       yield EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))

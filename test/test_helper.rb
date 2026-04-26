@@ -10,11 +10,16 @@ require "concurrent-ruby"
 require "pg_ephemeral"
 
 module En57
-  SERVER = PgEphemeral.start
-  CONNECTION = PG.connect(SERVER.url)
+  class IntegrationTest < Minitest::Test
+    SERVER = PgEphemeral.start
+    CONNECTION = PG.connect(SERVER.url)
 
-  Minitest.after_run do
-    CONNECTION.close
-    SERVER.shutdown
+    def setup =
+      CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
+
+    Minitest.after_run do
+      CONNECTION.close
+      SERVER.shutdown
+    end
   end
 end
