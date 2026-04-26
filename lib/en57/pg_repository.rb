@@ -12,7 +12,7 @@ module En57
       @array_decoder = PG::TextDecoder::Array.new
     end
 
-    def append(events, fail_if:, after:)
+    def append(events, fail_if:)
       event_records =
         events.map do |event|
           serialized, description = @serializer.dump(event.data)
@@ -31,7 +31,6 @@ module En57
       append_condition[
         :fail_if_events_match
       ] = fail_if_events_match unless fail_if_events_match.empty?
-      append_condition[:after] = after unless after.nil?
 
       with_serializable_transaction do |connection|
         connection.exec_params(

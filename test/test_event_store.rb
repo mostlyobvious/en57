@@ -10,13 +10,7 @@ module En57
       event = Event.new(type: "CreditsToppedUp")
 
       with_repository do |repository|
-        repository.expect(
-          :append,
-          nil,
-          [[event]],
-          fail_if: Query.all,
-          after: nil,
-        )
+        repository.expect(:append, nil, [[event]], fail_if: Query.all)
 
         EventStore.new(repository).append([event])
       end
@@ -39,33 +33,11 @@ module En57
       event = Event.new(type: "CreditsToppedUp")
 
       with_repository do |repository|
-        repository.expect(
-          :append,
-          nil,
-          [[event]],
-          fail_if: Query.all,
-          after: nil,
-        )
+        repository.expect(:append, nil, [[event]], fail_if: Query.all)
 
         event_store = EventStore.new(repository)
 
         assert_equal(event_store, event_store.append([event]))
-      end
-    end
-
-    def test_append_forwards_options
-      event = Event.new(type: "CreditsToppedUp")
-
-      with_repository do |repository|
-        repository.expect(
-          :append,
-          nil,
-          [[event]],
-          fail_if: Query.all,
-          after: 42,
-        )
-
-        EventStore.new(repository).append([event], after: 42)
       end
     end
 
@@ -75,13 +47,7 @@ module En57
       with_repository do |repository|
         event_store = EventStore.new(repository)
         fail_if = event_store.read.with_tag("order_id:123")
-        repository.expect(
-          :append,
-          nil,
-          [[event]],
-          fail_if: fail_if.to_query,
-          after: nil,
-        )
+        repository.expect(:append, nil, [[event]], fail_if: fail_if.to_query)
 
         event_store.append([event], fail_if:)
       end
@@ -95,7 +61,7 @@ module En57
           Query.new(
             criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
           )
-        repository.expect(:append, nil, [[event]], fail_if:, after: nil)
+        repository.expect(:append, nil, [[event]], fail_if:)
 
         EventStore.new(repository).append([event], fail_if:)
       end

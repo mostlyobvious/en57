@@ -62,7 +62,6 @@ module En57
             ),
           ],
           fail_if: Query.all,
-          after: nil,
         )
       end
     end
@@ -77,7 +76,7 @@ module En57
             "SELECT append_events($1::event_with_tags[], $2::jsonb)",
             [
               array_encoder.encode([]),
-              '{"fail_if_events_match":[{"types":["OrderPlaced"]}],"after":42}',
+              '{"fail_if_events_match":[{"types":["OrderPlaced"],"after":42}]}',
             ],
           ],
         )
@@ -87,9 +86,14 @@ module En57
           [],
           fail_if:
             Query.new(
-              criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
+              criteria: [
+                Query::Criteria.new(
+                  types: ["OrderPlaced"],
+                  tags: [],
+                  after: 42,
+                ),
+              ],
             ),
-          after: 42,
         )
       end
     end
@@ -111,7 +115,6 @@ module En57
           PgRepository.new(connection_uri, JsonSerializer.new).append(
             [],
             fail_if: Query.all,
-            after: nil,
           )
         end
       end
@@ -129,7 +132,6 @@ module En57
           PgRepository.new(connection_uri, JsonSerializer.new).append(
             [],
             fail_if: Query.all,
-            after: nil,
           )
         end
       end
@@ -147,7 +149,6 @@ module En57
           PgRepository.new(connection_uri, JsonSerializer.new).append(
             [],
             fail_if: Query.all,
-            after: nil,
           )
         end
       end
@@ -165,7 +166,6 @@ module En57
           PgRepository.new(connection_uri, JsonSerializer.new).append(
             [],
             fail_if: Query.all,
-            after: nil,
           )
         end
       end
@@ -181,7 +181,6 @@ module En57
           PgRepository.new(connection_uri, JsonSerializer.new).append(
             [],
             fail_if: Query.all,
-            after: nil,
           )
         end
       end

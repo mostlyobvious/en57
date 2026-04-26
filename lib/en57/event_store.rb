@@ -6,8 +6,8 @@ module En57
       @repository = repository
     end
 
-    def append(events, fail_if: EmptyScope.new, after: nil)
-      @repository.append(events, fail_if: fail_if.to_query, after:)
+    def append(events, fail_if: EmptyScope.new)
+      @repository.append(events, fail_if: fail_if.to_query)
       self
     end
 

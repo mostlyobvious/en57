@@ -49,8 +49,7 @@ module En57
         event_store.append([existing_event])
         event_store.append(
           [Event.new(id: ids[1], type: "ShipmentScheduled")],
-          fail_if: event_store.read.of_type("OrderPlaced"),
-          after: 1,
+          fail_if: event_store.read.of_type("OrderPlaced").after(1),
         )
 
         assert_equal(
@@ -68,8 +67,7 @@ module En57
         assert_raises(AppendConditionViolated) do
           event_store.append(
             [Event.new(id: ids[1], type: "ShipmentScheduled")],
-            fail_if: event_store.read.of_type("OrderPlaced"),
-            after: 0,
+            fail_if: event_store.read.of_type("OrderPlaced").after(0),
           )
         end
 

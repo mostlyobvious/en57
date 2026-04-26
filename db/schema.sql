@@ -32,21 +32,21 @@ DECLARE
     criteria jsonb[] := ARRAY (
         SELECT
             jsonb_array_elements(COALESCE(append_condition -> 'fail_if_events_match', '[]'::jsonb)));
-    AFTER bigint := (append_condition ->> 'after')::bigint;
 BEGIN
     IF cardinality(criteria) > 0 AND EXISTS (
         SELECT
             1
         FROM
             events AS e
-        WHERE (AFTER IS NULL OR e.position > AFTER) AND EXISTS (
-    SELECT
-        1
-    FROM
-        unnest(criteria) AS c
-    WHERE (c -> 'types' IS NULL OR e.type IN (
-    SELECT
-        jsonb_array_elements_text(c -> 'types'))) AND NOT EXISTS (
+        WHERE
+            EXISTS (
+            SELECT
+                1
+            FROM
+                unnest(criteria) AS c
+            WHERE ((c ->> 'after')::bigint IS NULL OR e.position > (c ->> 'after')::bigint) AND (c -> 'types' IS NULL OR e.type IN (
+SELECT
+    jsonb_array_elements_text(c -> 'types'))) AND NOT EXISTS (
 SELECT
     1
 FROM
