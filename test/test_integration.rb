@@ -14,14 +14,6 @@ module En57
       SERVER.shutdown
     end
 
-    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
-
-    def with_event_store =
-      yield EventStore.new(PgRepository.new(CONNECTION_URI, JsonSerializer.new))
-
-    def setup =
-      CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
-
     def test_happy_path
       with_event_store do |event_store|
         events = [
@@ -228,5 +220,15 @@ module En57
         assert_equal(events.fetch_values(0, 2), (orders | prices).each.to_a)
       end
     end
+
+    private
+
+    def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
+
+    def with_event_store =
+      yield EventStore.new(PgRepository.new(CONNECTION_URI, JsonSerializer.new))
+
+    def setup =
+      CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
   end
 end

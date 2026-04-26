@@ -15,10 +15,6 @@ module En57
       SERVER.shutdown
     end
 
-    def setup
-      CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
-    end
-
     def test_only_one_writer_can_consume_account_credits
       account_tag = "account:x"
       event_store.append(
@@ -76,6 +72,10 @@ module En57
     end
 
     private
+
+    def setup
+      CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
+    end
 
     def event_store
       @event_store ||=

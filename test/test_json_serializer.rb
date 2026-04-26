@@ -11,8 +11,6 @@ module En57
   class TestJsonSerializer < Minitest::Test
     cover JsonSerializer
 
-    def serializer = JsonSerializer.new
-
     class Example < Data.define(:name, :value, :serialized, :klass)
       NATIVE_TYPES = %w[
         String
@@ -69,5 +67,9 @@ module En57
     def test_empty_meta_for_native_payload
       assert_equal(%w[{"kaka":"dudu"} {}], serializer.dump("kaka" => "dudu"))
     end
+
+    private
+
+    def serializer = JsonSerializer.new
   end
 end

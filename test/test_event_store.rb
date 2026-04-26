@@ -6,10 +6,6 @@ module En57
   class TestEventStore < Minitest::Test
     cover EventStore
 
-    def credit_topped_up
-      @credit_topped_up ||= Event.new(type: "CreditsToppedUp")
-    end
-
     def test_append_event
       repository =
         Class
@@ -104,6 +100,12 @@ module En57
       EventStore.new(repository).append([credit_topped_up], fail_if:)
 
       assert_equal({ fail_if:, after: nil }, repository.kwargs)
+    end
+
+    private
+
+    def credit_topped_up
+      @credit_topped_up ||= Event.new(type: "CreditsToppedUp")
     end
   end
 end
