@@ -69,12 +69,18 @@ module En57
           criteria: [
             Query::Criteria.new(types: ["OrderPlaced"], tags: []),
             Query::Criteria.new(types: [], tags: ["order_id:123"]),
+            Query::Criteria.new(types: [], tags: [], after: 42),
             Query::Criteria.new(types: [], tags: []),
           ],
         )
 
       assert_equal(
-        [{ types: ["OrderPlaced"] }, { tags: ["order_id:123"] }, {}],
+        [
+          { types: ["OrderPlaced"] },
+          { tags: ["order_id:123"] },
+          { after: 42 },
+          {},
+        ],
         query.encoded_criteria,
       )
     end

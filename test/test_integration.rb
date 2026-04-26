@@ -86,6 +86,20 @@ module En57
       end
     end
 
+    def test_read_filters_after
+      with_event_store do |event_store|
+        events = [
+          Event.new(id: ids[0], type: "OrderPlaced"),
+          Event.new(id: ids[1], type: "PriceChanged"),
+        ]
+
+        assert_equal(
+          events.drop(1),
+          event_store.append(events).read.after(1).each.to_a,
+        )
+      end
+    end
+
     def test_read_filters_by_tags
       with_event_store do |event_store|
         events = [

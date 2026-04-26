@@ -358,6 +358,28 @@ module En57
       end
     end
 
+    def test_read_events_filtered_by_after
+      query =
+        Query.new(
+          criteria: [Query::Criteria.new(types: [], tags: [], after: 42)],
+        )
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(
+          :exec_params,
+          [],
+          [
+            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            [array_encoder.encode(['{"after":42}'])],
+          ],
+        )
+
+        assert_equal(
+          [],
+          PgRepository.new(connection_uri, JsonSerializer.new).read(query),
+        )
+      end
+    end
+
     def test_read_events_filtered_by_type
       query =
         Query.new(

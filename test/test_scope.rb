@@ -176,6 +176,23 @@ module En57
       repository.verify
     end
 
+    def test_after_refines_query
+      repository = Minitest::Mock.new
+
+      repository.expect(
+        :read,
+        [],
+        [
+          Query.new(
+            criteria: [Query::Criteria.new(types: [], tags: [], after: 42)],
+          ),
+        ],
+      )
+
+      assert_equal([], Scope.new(repository, Query.all).after(42).each.to_a)
+      repository.verify
+    end
+
     def test_merged_scope_cannot_be_refined_anymore
       repository = Minitest::Mock.new
       merged =
@@ -186,6 +203,7 @@ module En57
 
       assert_raises(NoMethodError) { merged.with_tag("customer_id:456") }
       assert_raises(NoMethodError) { merged.of_type("OrderCancelled") }
+      assert_raises(NoMethodError) { merged.after(42) }
     end
 
     def test_pipe_aliases_or

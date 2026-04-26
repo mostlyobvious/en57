@@ -27,14 +27,14 @@ DECLARE
     criteria jsonb[] := ARRAY (
         SELECT
             jsonb_array_elements(COALESCE(append_condition -> 'fail_if_events_match', '[]'::jsonb)));
-    after_pos bigint := (append_condition ->> 'after')::bigint;
+    AFTER bigint := (append_condition ->> 'after')::bigint;
 BEGIN
     IF cardinality(criteria) > 0 AND EXISTS (
         SELECT
             1
         FROM
             events AS e
-        WHERE (after_pos IS NULL OR e.position > after_pos) AND EXISTS (
+        WHERE (AFTER IS NULL OR e.position > AFTER) AND EXISTS (
     SELECT
         1
     FROM
@@ -82,6 +82,7 @@ CREATE FUNCTION read_events (criteria jsonb[])
         SELECT
             c,
             c -> 'tags' AS tags,
+            (c ->> 'after')::bigint AS after,
             ARRAY (
                 SELECT
                     jsonb_array_elements_text(c -> 'types')) AS types
@@ -104,7 +105,8 @@ filtered_events AS (
                 1
             FROM
                 parsed_criteria AS pc
-            WHERE (pc.c -> 'types' IS NULL
+            WHERE (pc.after IS NULL OR e.position > pc.after)
+            AND (pc.c -> 'types' IS NULL
                 OR e.type = ANY (pc.types))
             AND NOT EXISTS (
                 SELECT

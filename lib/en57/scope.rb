@@ -53,6 +53,13 @@ module En57
       )
     end
 
+    def after(position)
+      self.class.new(
+        @repository,
+        @query.refine_last { |item| item.with_after(position) },
+      )
+    end
+
     def or(other)
       MergedScope.new(repository: @repository, query: @query.or(other.to_query))
     end

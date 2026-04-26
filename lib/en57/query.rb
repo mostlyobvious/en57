@@ -3,7 +3,9 @@
 module En57
   class Query < Data.define(:criteria)
     Criteria =
-      Data.define(:types, :tags) do
+      Data.define(:types, :tags, :after) do
+        def initialize(types:, tags:, after: nil) = super
+
         def self.all = new(types: [], tags: [])
 
         def with_tags(tags)
@@ -14,8 +16,14 @@ module En57
           with(types: [*self.types, *types].uniq)
         end
 
+        def with_after(position)
+          with(after: position)
+        end
+
         def matcher
-          { types:, tags: }.reject { |_, value| value.empty? }
+          { types:, tags:, after: }.reject do |key, value|
+            key == :after ? value.nil? : value.empty?
+          end
         end
       end
 
