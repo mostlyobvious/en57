@@ -7,8 +7,7 @@ require "test_helper"
 module En57
   class TestStress < Minitest::Test
     SERVER = PgEphemeral.start
-    CONNECTION_URI = SERVER.url
-    CONNECTION = PG.connect(CONNECTION_URI)
+    CONNECTION = PG.connect(SERVER.url)
 
     Minitest.after_run do
       CONNECTION.close
@@ -37,9 +36,7 @@ module En57
         Array.new(worker_count) do
           Thread.new do
             store =
-              EventStore.new(
-                PgRepository.new(CONNECTION_URI, JsonSerializer.new),
-              )
+              EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))
             barrier.wait
             account_scope = store.read.with_tag(account_tag)
 
@@ -79,7 +76,7 @@ module En57
 
     def event_store
       @event_store ||=
-        EventStore.new(PgRepository.new(CONNECTION_URI, JsonSerializer.new))
+        EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))
     end
 
     def account_balance(scope)

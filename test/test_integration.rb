@@ -6,8 +6,7 @@ require "pg_ephemeral"
 module En57
   class TestIntegration < Minitest::Test
     SERVER = PgEphemeral.start
-    CONNECTION_URI = SERVER.url
-    CONNECTION = PG.connect(CONNECTION_URI)
+    CONNECTION = PG.connect(SERVER.url)
 
     Minitest.after_run do
       CONNECTION.close
@@ -26,7 +25,7 @@ module En57
     end
 
     def test_append_with_fail_if_and_no_matches_appends_events
-      repository = PgRepository.new(CONNECTION_URI, JsonSerializer.new)
+      repository = PgRepository.new(SERVER.url, JsonSerializer.new)
 
       repository.append(
         [Event.new(id: ids[0], type: "OrderPlaced")],
@@ -44,7 +43,7 @@ module En57
     end
 
     def test_append_with_fail_if_and_matches_raises_append_condition_violated
-      repository = PgRepository.new(CONNECTION_URI, JsonSerializer.new)
+      repository = PgRepository.new(SERVER.url, JsonSerializer.new)
       existing_event = Event.new(id: ids[0], type: "OrderPlaced")
       repository.append([existing_event], fail_if: Query.all, after: nil)
 
@@ -63,7 +62,7 @@ module En57
     end
 
     def test_append_with_after_ignores_matches_at_or_before_cutoff
-      repository = PgRepository.new(CONNECTION_URI, JsonSerializer.new)
+      repository = PgRepository.new(SERVER.url, JsonSerializer.new)
       existing_event = Event.new(id: ids[0], type: "OrderPlaced")
       repository.append([existing_event], fail_if: Query.all, after: nil)
       after =
@@ -89,7 +88,7 @@ module En57
     end
 
     def test_append_with_after_raises_if_match_is_after_cutoff
-      repository = PgRepository.new(CONNECTION_URI, JsonSerializer.new)
+      repository = PgRepository.new(SERVER.url, JsonSerializer.new)
       existing_event = Event.new(id: ids[0], type: "OrderPlaced")
       repository.append([existing_event], fail_if: Query.all, after: nil)
 
@@ -226,7 +225,7 @@ module En57
     def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
 
     def with_event_store =
-      yield EventStore.new(PgRepository.new(CONNECTION_URI, JsonSerializer.new))
+      yield EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))
 
     def setup =
       CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
