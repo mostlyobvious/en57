@@ -16,85 +16,65 @@ module En57
     end
 
     def test_append_with_fail_if_and_no_matches_appends_events
-      repository = PgRepository.new(SERVER.url, JsonSerializer.new)
+      with_event_store do |event_store|
+        event = Event.new(id: ids[0], type: "OrderPlaced")
+        event_store.append(
+          [event],
+          fail_if: event_store.read.of_type("PriceChanged"),
+        )
 
-      repository.append(
-        [Event.new(id: ids[0], type: "OrderPlaced")],
-        fail_if:
-          Query.new(
-            criteria: [Query::Criteria.new(types: ["PriceChanged"], tags: [])],
-          ),
-        after: nil,
-      )
-
-      assert_equal(
-        [Event.new(id: ids[0], type: "OrderPlaced")],
-        repository.read(Query.all),
-      )
+        assert_equal([event], event_store.read.each.to_a)
+      end
     end
 
     def test_append_with_fail_if_and_matches_raises_append_condition_violated
-      repository = PgRepository.new(SERVER.url, JsonSerializer.new)
-      existing_event = Event.new(id: ids[0], type: "OrderPlaced")
-      repository.append([existing_event], fail_if: Query.all, after: nil)
+      with_event_store do |event_store|
+        existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+        event_store.append([existing_event])
 
-      assert_raises(AppendConditionViolated) do
-        repository.append(
-          [Event.new(id: ids[1], type: "ShipmentScheduled")],
-          fail_if:
-            Query.new(
-              criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
-            ),
-          after: nil,
-        )
+        assert_raises(AppendConditionViolated) do
+          event_store.append(
+            [Event.new(id: ids[1], type: "ShipmentScheduled")],
+            fail_if: event_store.read.of_type("OrderPlaced"),
+          )
+        end
+
+        assert_equal([existing_event], event_store.read.each.to_a)
       end
-
-      assert_equal([existing_event], repository.read(Query.all))
     end
 
     def test_append_with_after_ignores_matches_at_or_before_cutoff
-      repository = PgRepository.new(SERVER.url, JsonSerializer.new)
-      existing_event = Event.new(id: ids[0], type: "OrderPlaced")
-      repository.append([existing_event], fail_if: Query.all, after: nil)
-      after =
-        Integer(
-          CONNECTION.exec("SELECT max(position) AS position FROM events")[0][
-            "position"
-          ],
+      with_event_store do |event_store|
+        existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+        event_store.append([existing_event])
+        event_store.append(
+          [Event.new(id: ids[1], type: "ShipmentScheduled")],
+          fail_if: event_store.read.of_type("OrderPlaced"),
+          after: 1,
         )
 
-      repository.append(
-        [Event.new(id: ids[1], type: "ShipmentScheduled")],
-        fail_if:
-          Query.new(
-            criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
-          ),
-        after:,
-      )
-
-      assert_equal(
-        [existing_event, Event.new(id: ids[1], type: "ShipmentScheduled")],
-        repository.read(Query.all),
-      )
+        assert_equal(
+          [existing_event, Event.new(id: ids[1], type: "ShipmentScheduled")],
+          event_store.read.each.to_a,
+        )
+      end
     end
 
     def test_append_with_after_raises_if_match_is_after_cutoff
-      repository = PgRepository.new(SERVER.url, JsonSerializer.new)
-      existing_event = Event.new(id: ids[0], type: "OrderPlaced")
-      repository.append([existing_event], fail_if: Query.all, after: nil)
+      with_event_store do |event_store|
+        existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+        event_store.append([existing_event])
 
-      assert_raises(AppendConditionViolated) do
-        repository.append(
-          [Event.new(id: ids[1], type: "ShipmentScheduled")],
-          fail_if:
-            Query.new(
-              criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
-            ),
-          after: 0,
-        )
+        assert_raises(AppendConditionViolated) do
+          event_store.append(
+            [Event.new(id: ids[1], type: "ShipmentScheduled")],
+            fail_if: event_store.read.of_type("OrderPlaced"),
+            after: 0,
+          )
+        end
+
+        assert_equal([existing_event], event_store.read.each.to_a)
       end
-
-      assert_equal([existing_event], repository.read(Query.all))
     end
 
     def test_tags_round_trip
