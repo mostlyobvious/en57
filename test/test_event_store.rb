@@ -53,20 +53,6 @@ module En57
       end
     end
 
-    def test_append_accepts_query_for_fail_if
-      event = Event.new(type: "CreditsToppedUp")
-
-      with_repository do |repository|
-        fail_if =
-          Query.new(
-            criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
-          )
-        repository.expect(:append, nil, [[event]], fail_if:)
-
-        EventStore.new(repository).append([event], fail_if:)
-      end
-    end
-
     private
 
     def with_repository

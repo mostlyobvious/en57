@@ -84,14 +84,5 @@ module En57
         query.encoded_criteria,
       )
     end
-
-    def test_to_query_returns_self
-      query =
-        Query.new(
-          criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
-        )
-
-      assert_same(query, query.to_query)
-    end
   end
 end

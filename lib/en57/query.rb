@@ -29,8 +29,6 @@ module En57
 
     def encoded_criteria = criteria.map(&:matcher)
 
-    def to_query = self
-
     def self.all = new(criteria: [])
 
     def refine_last
