@@ -60,13 +60,13 @@ module En57
           [@array_encoder.encode(criteria)],
         )
       end.map do |row|
-          Event.new(
-            id: row.fetch("id"),
-            type: row.fetch("type"),
-            data: @serializer.load(row.fetch("data"), row.fetch("meta")),
-            tags: @array_decoder.decode(row.fetch("tags")),
-          )
-        end
+        Event.new(
+          id: row.fetch("id"),
+          type: row.fetch("type"),
+          data: @serializer.load(row.fetch("data"), row.fetch("meta")),
+          tags: @array_decoder.decode(row.fetch("tags")),
+        )
+      end
     end
 
     private
