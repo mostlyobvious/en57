@@ -64,8 +64,6 @@ module En57
           fail_if: Query.all,
           after: nil,
         )
-
-        connection.verify
       end
     end
 
@@ -93,8 +91,6 @@ module En57
             ),
           after: 42,
         )
-
-        connection.verify
       end
     end
 
@@ -118,7 +114,6 @@ module En57
             after: nil,
           )
         end
-        connection.verify
       end
     end
 
@@ -137,7 +132,6 @@ module En57
             after: nil,
           )
         end
-        connection.verify
       end
     end
 
@@ -156,7 +150,6 @@ module En57
             after: nil,
           )
         end
-        connection.verify
       end
     end
 
@@ -175,7 +168,6 @@ module En57
             after: nil,
           )
         end
-        connection.verify
       end
     end
 
@@ -192,7 +184,6 @@ module En57
             after: nil,
           )
         end
-        connection.verify
       end
     end
 
@@ -243,7 +234,6 @@ module En57
           ],
           PgRepository.new(connection_uri, JsonSerializer.new).read(Query.all),
         )
-        connection.verify
       end
     end
 
@@ -283,7 +273,6 @@ module En57
           ],
           PgRepository.new(connection_uri, JsonSerializer.new).read(query),
         )
-        connection.verify
       end
     end
 
@@ -320,7 +309,6 @@ module En57
           ],
           PgRepository.new(connection_uri, JsonSerializer.new).read(query),
         )
-        connection.verify
       end
     end
 
@@ -367,7 +355,6 @@ module En57
           ],
           PgRepository.new(connection_uri, JsonSerializer.new).read(query),
         )
-        connection.verify
       end
     end
 
@@ -407,7 +394,6 @@ module En57
           ],
           PgRepository.new(connection_uri, JsonSerializer.new).read(query),
         )
-        connection.verify
       end
     end
 
@@ -427,6 +413,7 @@ module En57
           connection
         end,
       ) { yield connection }
+      connection.verify
     end
 
     def array_encoder = @array_encoder ||= PG::TextEncoder::Array.new
