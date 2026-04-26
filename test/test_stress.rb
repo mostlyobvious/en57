@@ -7,7 +7,8 @@ require "test_helper"
 module En57
   class TestStress < Minitest::Test
     SERVER = PgEphemeral.start
-    CONNECTION = PG.connect(SERVER.url)
+    CONNECTION_URI = SERVER.url
+    CONNECTION = PG.connect(CONNECTION_URI)
 
     Minitest.after_run do
       CONNECTION.close
@@ -39,32 +40,29 @@ module En57
       threads =
         Array.new(worker_count) do
           Thread.new do
-            connection = PG.connect(SERVER.url)
-            begin
-              store =
-                EventStore.new(PgRepository.new(connection, JsonSerializer.new))
-              barrier.wait
-              account_scope = store.read.with_tag(account_tag)
+            store =
+              EventStore.new(
+                PgRepository.new(CONNECTION_URI, JsonSerializer.new),
+              )
+            barrier.wait
+            account_scope = store.read.with_tag(account_tag)
 
-              if account_balance(account_scope) >= 100
-                store.append(
-                  [
-                    Event.new(
-                      type: "CreditsUsed",
-                      data: {
-                        amount: 100,
-                      },
-                      tags: [account_tag],
-                    ),
-                  ],
-                  fail_if: account_scope.of_type("CreditsUsed"),
-                )
-                successes << true
-              end
-            rescue AppendConditionViolated, PG::TRSerializationFailure
-            ensure
-              connection.close
+            if account_balance(account_scope) >= 100
+              store.append(
+                [
+                  Event.new(
+                    type: "CreditsUsed",
+                    data: {
+                      amount: 100,
+                    },
+                    tags: [account_tag],
+                  ),
+                ],
+                fail_if: account_scope.of_type("CreditsUsed"),
+              )
+              successes << true
             end
+          rescue AppendConditionViolated, PG::TRSerializationFailure
           end
         end
 
@@ -81,7 +79,7 @@ module En57
 
     def event_store
       @event_store ||=
-        EventStore.new(PgRepository.new(CONNECTION, JsonSerializer.new))
+        EventStore.new(PgRepository.new(CONNECTION_URI, JsonSerializer.new))
     end
 
     def account_balance(scope)

@@ -30,203 +30,215 @@ module En57
             ),
           ],
         )
-      connection = Minitest::Mock.new
-      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
-      connection.expect(
-        :exec_params,
-        nil,
-        [
-          "SELECT append_events($1::event_with_tags[], $2::jsonb)",
-          [expected_events, "{}"],
-        ],
-      )
-      connection.expect(:exec, nil, ["COMMIT"])
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(
+          :exec_params,
+          nil,
+          [
+            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            [expected_events, "{}"],
+          ],
+        )
+        connection.expect(:exec, nil, ["COMMIT"])
 
-      repository = PgRepository.new(connection, JsonSerializer.new)
-      repository.append(
-        [
-          Event.new(
-            id: ids[0],
-            type: "CreditsToppedUp",
-            data: {
-              amount: 100,
-            },
-            tags: ["order_id:123"],
-          ),
-          Event.new(
-            id: ids[1],
-            type: "CreditsToppedUp",
-            data: {
-              amount: 50,
-            },
-            tags: ["order_id:234"],
-          ),
-        ],
-        fail_if: Query.all,
-        after: nil,
-      )
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
+        repository.append(
+          [
+            Event.new(
+              id: ids[0],
+              type: "CreditsToppedUp",
+              data: {
+                amount: 100,
+              },
+              tags: ["order_id:123"],
+            ),
+            Event.new(
+              id: ids[1],
+              type: "CreditsToppedUp",
+              data: {
+                amount: 50,
+              },
+              tags: ["order_id:234"],
+            ),
+          ],
+          fail_if: Query.all,
+          after: nil,
+        )
 
-      connection.verify
+        connection.verify
+      end
     end
 
     def test_append_passes_fail_if_and_after_conditions
-      connection = Minitest::Mock.new
-      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
-      connection.expect(
-        :exec_params,
-        nil,
-        [
-          "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(
+          :exec_params,
+          nil,
           [
-            array_encoder.encode([]),
-            '{"fail_if_events_match":[{"types":["OrderPlaced"]}],"after":42}',
+            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            [
+              array_encoder.encode([]),
+              '{"fail_if_events_match":[{"types":["OrderPlaced"]}],"after":42}',
+            ],
           ],
-        ],
-      )
-      connection.expect(:exec, nil, ["COMMIT"])
+        )
+        connection.expect(:exec, nil, ["COMMIT"])
 
-      repository = PgRepository.new(connection, JsonSerializer.new)
-      repository.append(
-        [],
-        fail_if:
-          Query.new(
-            criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
-          ),
-        after: 42,
-      )
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
+        repository.append(
+          [],
+          fail_if:
+            Query.new(
+              criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
+            ),
+          after: 42,
+        )
 
-      connection.verify
+        connection.verify
+      end
     end
 
     def test_append_rolls_back_transaction_on_pg_failure
-      connection = Minitest::Mock.new
-      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
-      connection.expect(:exec, nil, ["ROLLBACK"])
-      connection.expect(:exec_params, nil) do |sql, params|
-        assert_equal(
-          "SELECT append_events($1::event_with_tags[], $2::jsonb)",
-          sql,
-        )
-        assert_equal([array_encoder.encode([]), "{}"], params)
-        raise PG::Error, "boom"
-      end
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(:exec, nil, ["ROLLBACK"])
+        connection.expect(:exec_params, nil) do |sql, params|
+          assert_equal(
+            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            sql,
+          )
+          assert_equal([array_encoder.encode([]), "{}"], params)
+          raise PG::Error, "boom"
+        end
 
-      repository = PgRepository.new(connection, JsonSerializer.new)
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
 
-      assert_raises(PG::Error) do
-        repository.append([], fail_if: Query.all, after: nil)
+        assert_raises(PG::Error) do
+          repository.append([], fail_if: Query.all, after: nil)
+        end
+        connection.verify
       end
-      connection.verify
     end
 
     def test_append_raises_append_condition_violated_from_pg_result_sqlstate
-      connection = Minitest::Mock.new
-      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
-      connection.expect(:exec, nil, ["ROLLBACK"])
-      connection.expect(:exec_params, nil) do
-        raise pg_error(result_sqlstate: "P0001")
-      end
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(:exec, nil, ["ROLLBACK"])
+        connection.expect(:exec_params, nil) do
+          raise pg_error(result_sqlstate: "P0001")
+        end
 
-      repository = PgRepository.new(connection, JsonSerializer.new)
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
 
-      assert_raises(AppendConditionViolated) do
-        repository.append([], fail_if: Query.all, after: nil)
+        assert_raises(AppendConditionViolated) do
+          repository.append([], fail_if: Query.all, after: nil)
+        end
+        connection.verify
       end
-      connection.verify
     end
 
     def test_append_raises_append_condition_violated_from_pg_error_sqlstate
-      connection = Minitest::Mock.new
-      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
-      connection.expect(:exec, nil, ["ROLLBACK"])
-      connection.expect(:exec_params, nil) { raise pg_error(sqlstate: "P0001") }
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(:exec, nil, ["ROLLBACK"])
+        connection.expect(:exec_params, nil) do
+          raise pg_error(sqlstate: "P0001")
+        end
 
-      repository = PgRepository.new(connection, JsonSerializer.new)
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
 
-      assert_raises(AppendConditionViolated) do
-        repository.append([], fail_if: Query.all, after: nil)
+        assert_raises(AppendConditionViolated) do
+          repository.append([], fail_if: Query.all, after: nil)
+        end
+        connection.verify
       end
-      connection.verify
     end
 
     def test_append_reraises_pg_error_for_non_append_condition_sqlstate
-      connection = Minitest::Mock.new
-      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
-      connection.expect(:exec, nil, ["ROLLBACK"])
-      connection.expect(:exec_params, nil) { raise pg_error(sqlstate: "23505") }
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(:exec, nil, ["ROLLBACK"])
+        connection.expect(:exec_params, nil) do
+          raise pg_error(sqlstate: "23505")
+        end
 
-      repository = PgRepository.new(connection, JsonSerializer.new)
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
 
-      assert_raises(PG::Error) do
-        repository.append([], fail_if: Query.all, after: nil)
+        assert_raises(PG::Error) do
+          repository.append([], fail_if: Query.all, after: nil)
+        end
+        connection.verify
       end
-      connection.verify
     end
 
     def test_append_rolls_back_transaction_on_failure
-      connection = Minitest::Mock.new
-      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
-      connection.expect(:exec, nil, ["ROLLBACK"])
-      connection.expect(:exec_params, nil) { raise RuntimeError, "boom" }
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(:exec, nil, ["ROLLBACK"])
+        connection.expect(:exec_params, nil) { raise RuntimeError, "boom" }
 
-      repository = PgRepository.new(connection, JsonSerializer.new)
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
 
-      assert_raises(RuntimeError) do
-        repository.append([], fail_if: Query.all, after: nil)
+        assert_raises(RuntimeError) do
+          repository.append([], fail_if: Query.all, after: nil)
+        end
+        connection.verify
       end
-      connection.verify
     end
 
     def test_read_events_with_tags
-      connection = Minitest::Mock.new
-      connection.expect(
-        :exec_params,
-        [
-          {
-            "id" => ids[0],
-            "type" => "CreditsToppedUp",
-            "data" => '{"amount":100}',
-            "meta" => "{}",
-            "tags" => "{order_id:123}",
-          },
-          {
-            "id" => ids[1],
-            "type" => "CreditsToppedUp",
-            "data" => '{"amount":50}',
-            "meta" => "{}",
-            "tags" => "{order_id:234}",
-          },
-        ],
-        [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode([])],
-        ],
-      )
-
-      repository = PgRepository.new(connection, JsonSerializer.new)
-
-      assert_equal(
-        [
-          Event.new(
-            id: ids[0],
-            type: "CreditsToppedUp",
-            data: {
-              "amount" => 100,
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(
+          :exec_params,
+          [
+            {
+              "id" => ids[0],
+              "type" => "CreditsToppedUp",
+              "data" => '{"amount":100}',
+              "meta" => "{}",
+              "tags" => "{order_id:123}",
             },
-            tags: ["order_id:123"],
-          ),
-          Event.new(
-            id: ids[1],
-            type: "CreditsToppedUp",
-            data: {
-              "amount" => 50,
+            {
+              "id" => ids[1],
+              "type" => "CreditsToppedUp",
+              "data" => '{"amount":50}',
+              "meta" => "{}",
+              "tags" => "{order_id:234}",
             },
-            tags: ["order_id:234"],
-          ),
-        ],
-        repository.read(Query.all),
-      )
-      connection.verify
+          ],
+          [
+            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            [array_encoder.encode([])],
+          ],
+        )
+
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
+
+        assert_equal(
+          [
+            Event.new(
+              id: ids[0],
+              type: "CreditsToppedUp",
+              data: {
+                "amount" => 100,
+              },
+              tags: ["order_id:123"],
+            ),
+            Event.new(
+              id: ids[1],
+              type: "CreditsToppedUp",
+              data: {
+                "amount" => 50,
+              },
+              tags: ["order_id:234"],
+            ),
+          ],
+          repository.read(Query.all),
+        )
+        connection.verify
+      end
     end
 
     def test_read_events_filtered_by_tags
@@ -234,78 +246,80 @@ module En57
         Query.new(
           criteria: [Query::Criteria.new(types: [], tags: ["order_id:123"])],
         )
-      connection = Minitest::Mock.new
-      connection.expect(
-        :exec_params,
-        [
-          {
-            "id" => ids[0],
-            "type" => "CreditsToppedUp",
-            "data" => '{"amount":100}',
-            "meta" => "{}",
-            "tags" => "{order_id:123}",
-          },
-        ],
-        [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(['{"tags":["order_id:123"]}'])],
-        ],
-      )
-
-      repository = PgRepository.new(connection, JsonSerializer.new)
-
-      assert_equal(
-        [
-          Event.new(
-            id: ids[0],
-            type: "CreditsToppedUp",
-            data: {
-              "amount" => 100,
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(
+          :exec_params,
+          [
+            {
+              "id" => ids[0],
+              "type" => "CreditsToppedUp",
+              "data" => '{"amount":100}',
+              "meta" => "{}",
+              "tags" => "{order_id:123}",
             },
-            tags: ["order_id:123"],
-          ),
-        ],
-        repository.read(query),
-      )
-      connection.verify
+          ],
+          [
+            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            [array_encoder.encode(['{"tags":["order_id:123"]}'])],
+          ],
+        )
+
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
+
+        assert_equal(
+          [
+            Event.new(
+              id: ids[0],
+              type: "CreditsToppedUp",
+              data: {
+                "amount" => 100,
+              },
+              tags: ["order_id:123"],
+            ),
+          ],
+          repository.read(query),
+        )
+        connection.verify
+      end
     end
 
     def test_read_events_with_wildcard_query_item
       query = Query.new(criteria: [Query::Criteria.new(types: [], tags: [])])
-      connection = Minitest::Mock.new
-      connection.expect(
-        :exec_params,
-        [
-          {
-            "id" => ids[0],
-            "type" => "CreditsToppedUp",
-            "data" => '{"amount":100}',
-            "meta" => "{}",
-            "tags" => "{order_id:123}",
-          },
-        ],
-        [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(["{}"])],
-        ],
-      )
-
-      repository = PgRepository.new(connection, JsonSerializer.new)
-
-      assert_equal(
-        [
-          Event.new(
-            id: ids[0],
-            type: "CreditsToppedUp",
-            data: {
-              "amount" => 100,
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(
+          :exec_params,
+          [
+            {
+              "id" => ids[0],
+              "type" => "CreditsToppedUp",
+              "data" => '{"amount":100}',
+              "meta" => "{}",
+              "tags" => "{order_id:123}",
             },
-            tags: ["order_id:123"],
-          ),
-        ],
-        repository.read(query),
-      )
-      connection.verify
+          ],
+          [
+            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            [array_encoder.encode(["{}"])],
+          ],
+        )
+
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
+
+        assert_equal(
+          [
+            Event.new(
+              id: ids[0],
+              type: "CreditsToppedUp",
+              data: {
+                "amount" => 100,
+              },
+              tags: ["order_id:123"],
+            ),
+          ],
+          repository.read(query),
+        )
+        connection.verify
+      end
     end
 
     def test_read_events_with_or_tag_predicates
@@ -316,44 +330,45 @@ module En57
             Query::Criteria.new(types: [], tags: ["order_id:456"]),
           ],
         )
-      connection = Minitest::Mock.new
-      connection.expect(
-        :exec_params,
-        [
-          {
-            "id" => ids[0],
-            "type" => "CreditsToppedUp",
-            "data" => '{"amount":100}',
-            "meta" => "{}",
-            "tags" => "{order_id:123}",
-          },
-        ],
-        [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(
+          :exec_params,
           [
-            array_encoder.encode(
-              %w[{"tags":["order_id:123"]} {"tags":["order_id:456"]}],
+            {
+              "id" => ids[0],
+              "type" => "CreditsToppedUp",
+              "data" => '{"amount":100}',
+              "meta" => "{}",
+              "tags" => "{order_id:123}",
+            },
+          ],
+          [
+            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            [
+              array_encoder.encode(
+                %w[{"tags":["order_id:123"]} {"tags":["order_id:456"]}],
+              ),
+            ],
+          ],
+        )
+
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
+
+        assert_equal(
+          [
+            Event.new(
+              id: ids[0],
+              type: "CreditsToppedUp",
+              data: {
+                "amount" => 100,
+              },
+              tags: ["order_id:123"],
             ),
           ],
-        ],
-      )
-
-      repository = PgRepository.new(connection, JsonSerializer.new)
-
-      assert_equal(
-        [
-          Event.new(
-            id: ids[0],
-            type: "CreditsToppedUp",
-            data: {
-              "amount" => 100,
-            },
-            tags: ["order_id:123"],
-          ),
-        ],
-        repository.read(query),
-      )
-      connection.verify
+          repository.read(query),
+        )
+        connection.verify
+      end
     end
 
     def test_read_events_filtered_by_type
@@ -361,45 +376,60 @@ module En57
         Query.new(
           criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
         )
-      connection = Minitest::Mock.new
-      connection.expect(
-        :exec_params,
-        [
-          {
-            "id" => ids[0],
-            "type" => "OrderPlaced",
-            "data" => '{"amount":100}',
-            "meta" => "{}",
-            "tags" => "{}",
-          },
-        ],
-        [
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [array_encoder.encode(['{"types":["OrderPlaced"]}'])],
-        ],
-      )
-
-      repository = PgRepository.new(connection, JsonSerializer.new)
-
-      assert_equal(
-        [
-          Event.new(
-            id: ids[0],
-            type: "OrderPlaced",
-            data: {
-              "amount" => 100,
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(
+          :exec_params,
+          [
+            {
+              "id" => ids[0],
+              "type" => "OrderPlaced",
+              "data" => '{"amount":100}',
+              "meta" => "{}",
+              "tags" => "{}",
             },
-            tags: [],
-          ),
-        ],
-        repository.read(query),
-      )
-      connection.verify
+          ],
+          [
+            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            [array_encoder.encode(['{"types":["OrderPlaced"]}'])],
+          ],
+        )
+
+        repository = PgRepository.new(connection_uri, JsonSerializer.new)
+
+        assert_equal(
+          [
+            Event.new(
+              id: ids[0],
+              type: "OrderPlaced",
+              data: {
+                "amount" => 100,
+              },
+              tags: [],
+            ),
+          ],
+          repository.read(query),
+        )
+        connection.verify
+      end
     end
 
     private
 
     def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
+
+    def connection_uri = "postgres://localhost:5432/en57_test"
+
+    def with_connection_to(connection_uri)
+      connection = Minitest::Mock.new
+
+      PG.stub(
+        :connect,
+        ->(actual_connection_uri) do
+          assert_equal(connection_uri, actual_connection_uri)
+          connection
+        end,
+      ) { yield connection }
+    end
 
     def array_encoder = @array_encoder ||= PG::TextEncoder::Array.new
 
