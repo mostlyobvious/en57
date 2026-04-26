@@ -33,22 +33,18 @@ module En57
       ] = fail_if_events_match unless fail_if_events_match.empty?
       append_condition[:after] = after unless after.nil?
 
-      @connection.exec("BEGIN ISOLATION LEVEL SERIALIZABLE")
-      @connection.exec_params(
-        "SELECT append_events($1::event_with_tags[], $2::jsonb)",
-        [@array_encoder.encode(event_records), JSON.generate(append_condition)],
-      )
-      @connection.exec("COMMIT")
+      in_serializable_transaction do
+        @connection.exec_params(
+          "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+          [@array_encoder.encode(event_records), JSON.generate(append_condition)],
+        )
+      end
     rescue PG::Error => e
-      @connection.exec("ROLLBACK")
       sqlstate =
         e.result&.error_field(PG::Result::PG_DIAG_SQLSTATE) ||
           (e.sqlstate if e.respond_to?(:sqlstate))
       raise AppendConditionViolated if sqlstate == "P0001"
 
-      raise
-    rescue StandardError
-      @connection.exec("ROLLBACK")
       raise
     end
 
@@ -68,6 +64,17 @@ module En57
             tags: @array_decoder.decode(row.fetch("tags")),
           )
         end
+    end
+
+    private
+
+    def in_serializable_transaction
+      @connection.exec("BEGIN ISOLATION LEVEL SERIALIZABLE")
+      yield
+      @connection.exec("COMMIT")
+    rescue StandardError
+      @connection.exec("ROLLBACK")
+      raise
     end
   end
 end
