@@ -30,7 +30,17 @@ module En57
             ),
           ],
         )
-      connection = spy_connection
+      connection = Minitest::Mock.new
+      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+      connection.expect(
+        :exec_params,
+        nil,
+        [
+          "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+          [expected_events, "{}"],
+        ],
+      )
+      connection.expect(:exec, nil, ["COMMIT"])
 
       repository = PgRepository.new(connection, JsonSerializer.new)
       repository.append(
@@ -56,22 +66,24 @@ module En57
         after: nil,
       )
 
-      assert_equal(
-        [
-          [:exec, "BEGIN ISOLATION LEVEL SERIALIZABLE"],
-          [
-            :exec_params,
-            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
-            [expected_events, "{}"],
-          ],
-          [:exec, "COMMIT"],
-        ],
-        connection.calls,
-      )
+      connection.verify
     end
 
     def test_append_passes_fail_if_and_after_conditions
-      connection = spy_connection
+      connection = Minitest::Mock.new
+      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+      connection.expect(
+        :exec_params,
+        nil,
+        [
+          "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+          [
+            array_encoder.encode([]),
+            '{"fail_if_events_match":[{"types":["OrderPlaced"]}],"after":42}',
+          ],
+        ],
+      )
+      connection.expect(:exec, nil, ["COMMIT"])
 
       repository = PgRepository.new(connection, JsonSerializer.new)
       repository.append(
@@ -83,92 +95,86 @@ module En57
         after: 42,
       )
 
-      assert_equal(
-        {
-          "fail_if_events_match" => [{ "types" => ["OrderPlaced"] }],
-          "after" => 42,
-        },
-        JSON.parse(connection.calls[1][2][1]),
-      )
+      connection.verify
     end
 
     def test_append_rolls_back_transaction_on_pg_failure
-      connection = spy_connection
-      connection.error = PG::Error.new("boom")
+      connection = Minitest::Mock.new
+      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+      connection.expect(:exec, nil, ["ROLLBACK"])
+      connection.expect(:exec_params, nil) do |sql, params|
+        assert_equal(
+          "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+          sql,
+        )
+        assert_equal([array_encoder.encode([]), "{}"], params)
+        raise PG::Error, "boom"
+      end
 
       repository = PgRepository.new(connection, JsonSerializer.new)
 
       assert_raises(PG::Error) do
         repository.append([], fail_if: Query.all, after: nil)
       end
-      assert_equal(
-        [
-          [:exec, "BEGIN ISOLATION LEVEL SERIALIZABLE"],
-          [
-            :exec_params,
-            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
-            [array_encoder.encode([]), "{}"],
-          ],
-          [:exec, "ROLLBACK"],
-        ],
-        connection.calls,
-      )
+      connection.verify
     end
 
     def test_append_raises_append_condition_violated_from_pg_result_sqlstate
-      connection = spy_connection
-      connection.error = pg_error(result_sqlstate: "P0001")
+      connection = Minitest::Mock.new
+      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+      connection.expect(:exec, nil, ["ROLLBACK"])
+      connection.expect(:exec_params, nil) do
+        raise pg_error(result_sqlstate: "P0001")
+      end
 
       repository = PgRepository.new(connection, JsonSerializer.new)
 
       assert_raises(AppendConditionViolated) do
         repository.append([], fail_if: Query.all, after: nil)
       end
+      connection.verify
     end
 
     def test_append_raises_append_condition_violated_from_pg_error_sqlstate
-      connection = spy_connection
-      connection.error = pg_error(sqlstate: "P0001")
+      connection = Minitest::Mock.new
+      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+      connection.expect(:exec, nil, ["ROLLBACK"])
+      connection.expect(:exec_params, nil) { raise pg_error(sqlstate: "P0001") }
 
       repository = PgRepository.new(connection, JsonSerializer.new)
 
       assert_raises(AppendConditionViolated) do
         repository.append([], fail_if: Query.all, after: nil)
       end
+      connection.verify
     end
 
     def test_append_reraises_pg_error_for_non_append_condition_sqlstate
-      connection = spy_connection
-      connection.error = pg_error(sqlstate: "23505")
+      connection = Minitest::Mock.new
+      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+      connection.expect(:exec, nil, ["ROLLBACK"])
+      connection.expect(:exec_params, nil) { raise pg_error(sqlstate: "23505") }
 
       repository = PgRepository.new(connection, JsonSerializer.new)
 
       assert_raises(PG::Error) do
         repository.append([], fail_if: Query.all, after: nil)
       end
+      connection.verify
     end
 
     def test_append_rolls_back_transaction_on_failure
-      connection = spy_connection
-      connection.error = RuntimeError.new("boom")
+      connection = Minitest::Mock.new
+      connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+      connection.expect(:exec, nil, ["ROLLBACK"])
+      connection.expect(:exec_params, nil) { raise RuntimeError, "boom" }
 
       repository = PgRepository.new(connection, JsonSerializer.new)
 
       assert_raises(RuntimeError) do
         repository.append([], fail_if: Query.all, after: nil)
       end
-      assert_equal(
-        [
-          [:exec, "BEGIN ISOLATION LEVEL SERIALIZABLE"],
-          [
-            :exec_params,
-            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
-            [array_encoder.encode([]), "{}"],
-          ],
-          [:exec, "ROLLBACK"],
-        ],
-        connection.calls,
-      )
+      connection.verify
     end
 
     def test_read_events_with_tags
@@ -398,28 +404,6 @@ module En57
     def array_encoder = @array_encoder ||= PG::TextEncoder::Array.new
 
     def record_encoder = @record_encoder ||= PG::TextEncoder::Record.new
-
-    def spy_connection
-      Class
-        .new do
-          attr_accessor :error
-          attr_reader :calls
-
-          def initialize
-            @calls = []
-          end
-
-          def exec(sql)
-            @calls << [:exec, sql]
-          end
-
-          def exec_params(sql, params)
-            @calls << [:exec_params, sql, params]
-            raise error if error
-          end
-        end
-        .new
-    end
 
     def pg_error(result_sqlstate: nil, sqlstate: nil)
       error = PG::Error.new("boom")
