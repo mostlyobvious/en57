@@ -5,69 +5,65 @@ require "test_helper"
 module En57
   class TestStress < Minitest::Test
     def test_only_one_writer_can_consume_account_credits
-      account_tag = "account:x"
-      event_store.append(
-        [
-          Event.new(
-            type: "CreditsToppedUp",
-            data: {
-              amount: 100,
-            },
-            tags: [account_tag],
-          ),
-        ],
-      )
+      with_event_store do |event_store|
+        event_store.append(
+          [
+            Event.new(
+              type: "CreditsToppedUp",
+              data: {
+                amount: 100,
+              },
+              tags: [account_tag],
+            ),
+          ],
+        )
 
-      worker_count = 8
-      barrier = Concurrent::CyclicBarrier.new(worker_count)
-      successes = Queue.new
+        barrier = Concurrent::CyclicBarrier.new(concurrency)
+        threads =
+          Array.new(concurrency) do
+            Thread.new do
+              with_event_store do |event_store_|
+                barrier.wait
+                account_scope = event_store_.read.with_tag(account_tag)
 
-      threads =
-        Array.new(worker_count) do
-          Thread.new do
-            store =
-              EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))
-            barrier.wait
-            account_scope = store.read.with_tag(account_tag)
-
-            if account_balance(account_scope) >= 100
-              store.append(
-                [
-                  Event.new(
-                    type: "CreditsUsed",
-                    data: {
-                      amount: 100,
-                    },
-                    tags: [account_tag],
-                  ),
-                ],
-                fail_if: account_scope.of_type("CreditsUsed"),
-              )
-              successes << true
+                if account_balance(account_scope) >= 100
+                  event_store_.append(
+                    [
+                      Event.new(
+                        type: "CreditsUsed",
+                        data: {
+                          amount: 100,
+                        },
+                        tags: [account_tag],
+                      ),
+                    ],
+                    fail_if: account_scope.of_type("CreditsUsed"),
+                  )
+                end
+              end
+            rescue AppendConditionViolated, PG::TRSerializationFailure
             end
-          rescue AppendConditionViolated, PG::TRSerializationFailure
           end
-        end
+        threads.each(&:join)
 
-      threads.each(&:join)
+        account_scope = event_store.read.with_tag(account_tag)
 
-      account_scope = event_store.read.with_tag(account_tag)
-
-      assert_equal(1, account_scope.of_type("CreditsUsed").each.count)
-      assert_equal(1, successes.size)
-      assert_equal(0, account_balance(account_scope))
+        assert_equal 1, account_scope.of_type("CreditsUsed").each.count
+        assert_equal 0, account_balance(account_scope)
+      end
     end
 
     private
 
-    def setup
+    def setup =
       CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
-    end
 
-    def event_store
-      @event_store ||=
-        EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))
-    end
+    def with_event_store =
+      yield EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))
+
+    def concurrency = 8
+
+    def account_tag = "account:x"
 
     def account_balance(scope)
       scope.each.sum do |event|
