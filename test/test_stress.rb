@@ -1,19 +1,9 @@
 # frozen_string_literal: true
 
-require "concurrent-ruby"
-require "pg_ephemeral"
 require "test_helper"
 
 module En57
   class TestStress < Minitest::Test
-    SERVER = PgEphemeral.start
-    CONNECTION = PG.connect(SERVER.url)
-
-    Minitest.after_run do
-      CONNECTION.close
-      SERVER.shutdown
-    end
-
     def test_only_one_writer_can_consume_account_credits
       account_tag = "account:x"
       event_store.append(

@@ -1,18 +1,9 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "pg_ephemeral"
 
 module En57
   class TestIntegration < Minitest::Test
-    SERVER = PgEphemeral.start
-    CONNECTION = PG.connect(SERVER.url)
-
-    Minitest.after_run do
-      CONNECTION.close
-      SERVER.shutdown
-    end
-
     def test_happy_path
       with_event_store do |event_store|
         events = [
