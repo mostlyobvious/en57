@@ -7,34 +7,28 @@ module En57
     cover EventStore
 
     def test_append_event
-      repository =
-        Class
-          .new do
-            attr_reader :args, :kwargs
+      with_repository do |repository|
+        repository.expect(
+          :append,
+          nil,
+          [[credit_topped_up]],
+          fail_if: Query.all,
+          after: nil,
+        )
 
-            def append(*args, **kwargs)
-              @args = args
-              @kwargs = kwargs
-            end
-          end
-          .new
-
-      EventStore.new(repository).append([credit_topped_up])
-
-      assert_equal([[credit_topped_up]], repository.args)
-      assert_equal({ fail_if: Query.all, after: nil }, repository.kwargs)
+        EventStore.new(repository).append([credit_topped_up])
+      end
     end
 
     def test_read_returns_scope_for_query_all
-      repository = Minitest::Mock.new
-      repository.expect(:read, [credit_topped_up], [Query.all])
+      with_repository do |repository|
+        repository.expect(:read, [credit_topped_up], [Query.all])
 
-      result = EventStore.new(repository).read
+        result = EventStore.new(repository).read
 
-      assert_instance_of(Scope, result)
-      assert_equal([credit_topped_up], result.each.to_a)
-
-      repository.verify
+        assert_instance_of(Scope, result)
+        assert_equal([credit_topped_up], result.each.to_a)
+      end
     end
 
     def test_return_self_from_append
@@ -103,6 +97,12 @@ module En57
     end
 
     private
+
+    def with_repository
+      repository = Minitest::Mock.new
+      yield repository
+      repository.verify
+    end
 
     def credit_topped_up
       @credit_topped_up ||= Event.new(type: "CreditsToppedUp")
