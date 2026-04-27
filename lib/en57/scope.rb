@@ -20,9 +20,7 @@ module En57
     def each_with_position(&block)
       return enum_for(__method__) unless block
 
-      @repository.read(@query).each do |event, position|
-        yield event, position
-      end
+      @repository.read(@query).each { |event, position| yield event, position }
     end
 
     def to_query = @query
@@ -48,9 +46,7 @@ module En57
     def each_with_position(&block)
       return enum_for(__method__) unless block
 
-      @repository.read(@query).each do |event, position|
-        yield event, position
-      end
+      @repository.read(@query).each { |event, position| yield event, position }
     end
 
     def to_query = @query

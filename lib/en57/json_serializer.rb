@@ -54,7 +54,10 @@ module En57
           metadata[dumped_key]["v"] = vtype.name if vtype
           [dumped_key, vtype ? vtype.dump[v] : v]
         end
-      [JSON.generate(serialized), (JSON.generate(metadata) unless metadata.empty?)]
+      [
+        JSON.generate(serialized),
+        (JSON.generate(metadata) unless metadata.empty?),
+      ]
     end
 
     def load(string, description)

@@ -70,7 +70,8 @@ module En57
             Event.new(
               id: row.fetch("id"),
               type: row.fetch("type"),
-              data: @serializer.load(row.fetch("data") || "{}", row.fetch("meta")),
+              data:
+                @serializer.load(row.fetch("data") || "{}", row.fetch("meta")),
               tags: @array_decoder.decode(row.fetch("tags")),
             ),
             Integer(row.fetch("position")),

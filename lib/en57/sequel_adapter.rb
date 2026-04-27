@@ -17,8 +17,7 @@ module En57
         @database.synchronize { |connection| yield connection }
       end
     rescue StandardError => e
-      if defined?(Sequel::DatabaseError) &&
-           e.is_a?(Sequel::DatabaseError) &&
+      if defined?(Sequel::DatabaseError) && e.is_a?(Sequel::DatabaseError) &&
            e.wrapped_exception.is_a?(PG::Error)
         raise e.wrapped_exception
       end
