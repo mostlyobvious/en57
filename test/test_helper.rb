@@ -4,12 +4,12 @@ require "minitest/autorun"
 require "minitest/mock"
 require "mutant/minitest/coverage"
 
+require "sequel"
+require "active_record"
 require "en57"
 require "securerandom"
 require "concurrent-ruby"
 require "pg_ephemeral"
-require "sequel"
-require "active_record"
 
 module En57
   class IntegrationTest < Minitest::Test

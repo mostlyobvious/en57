@@ -3,6 +3,8 @@ includes:
 - lib
 - test
 requires:
+- sequel
+- active_record
 - en57
 integration:
   name: minitest
