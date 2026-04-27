@@ -54,18 +54,26 @@ module En57
 
         payload = { k.value => v.value }
         serialized = JSON.dump(k.serialized => v.serialized)
+        description = meta.empty? ? nil : JSON.dump(meta)
 
         define_method("test_dump_#{k.name}_key_#{v.name}_value") do
-          assert_equal([serialized, JSON.dump(meta)], serializer.dump(payload))
+          assert_equal([serialized, description], serializer.dump(payload))
         end
 
         define_method("test_load_#{k.name}_key_#{v.name}_value") do
-          assert_equal(payload, serializer.load(serialized, JSON.dump(meta)))
+          assert_equal(payload, serializer.load(serialized, description))
         end
       end
 
     def test_empty_meta_for_native_payload
-      assert_equal(%w[{"kaka":"dudu"} {}], serializer.dump("kaka" => "dudu"))
+      assert_equal(['{"kaka":"dudu"}', nil], serializer.dump("kaka" => "dudu"))
+    end
+
+    def test_load_handles_empty_description
+      assert_equal(
+        { "kaka" => "dudu" },
+        serializer.load('{"kaka":"dudu"}', nil),
+      )
     end
 
     private

@@ -3,7 +3,7 @@ CREATE TABLE events (
     id uuid PRIMARY KEY,
     type text NOT NULL,
     data jsonb,
-    meta jsonb NOT NULL
+    meta jsonb
 );
 CREATE TABLE tags (
     event_id uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,

@@ -72,7 +72,7 @@ module En57
     def test_append_persists_empty_event_data_as_null
       expected_events =
         array_encoder.encode(
-          [record_encoder.encode([ids[0], "OrderPlaced", nil, "{}", "{}"])],
+          [record_encoder.encode([ids[0], "OrderPlaced", nil, nil, "{}"])],
         )
       with_connection_to(connection_uri) do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
@@ -263,7 +263,7 @@ module En57
               "id" => ids[0],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":100}',
-              "meta" => "{}",
+              "meta" => nil,
               "tags" => "{order_id:123}",
             },
             {
@@ -271,7 +271,7 @@ module En57
               "id" => ids[1],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":50}',
-              "meta" => "{}",
+              "meta" => nil,
               "tags" => "{order_id:234}",
             },
           ],
@@ -314,6 +314,47 @@ module En57
       end
     end
 
+    def test_read_events_with_metadata_restores_types
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(
+          :exec_params,
+          [
+            {
+              "position" => "1",
+              "id" => ids[0],
+              "type" => "CreditsToppedUp",
+              "data" => '{"amount":100}',
+              "meta" => '{"amount":{"k":"Symbol"}}',
+              "tags" => "{}",
+            },
+          ],
+          [
+            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            [array_encoder.encode([])],
+          ],
+        )
+
+        assert_equal(
+          [
+            [
+              Event.new(
+                id: ids[0],
+                type: "CreditsToppedUp",
+                data: {
+                  amount: 100,
+                },
+              ),
+              1,
+            ],
+          ],
+          Repository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).read(Query.all),
+        )
+      end
+    end
+
     def test_read_events_with_null_data_returns_empty_hash
       with_connection_to(connection_uri) do |connection|
         connection.expect(
@@ -324,7 +365,7 @@ module En57
               "id" => ids[0],
               "type" => "OrderPlaced",
               "data" => nil,
-              "meta" => "{}",
+              "meta" => nil,
               "tags" => "{}",
             },
           ],
@@ -358,7 +399,7 @@ module En57
               "id" => ids[0],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":100}',
-              "meta" => "{}",
+              "meta" => nil,
               "tags" => "{order_id:123}",
             },
           ],
@@ -401,7 +442,7 @@ module En57
               "id" => ids[0],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":100}',
-              "meta" => "{}",
+              "meta" => nil,
               "tags" => "{order_id:123}",
             },
           ],
@@ -450,7 +491,7 @@ module En57
               "id" => ids[0],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":100}',
-              "meta" => "{}",
+              "meta" => nil,
               "tags" => "{order_id:123}",
             },
           ],
@@ -525,7 +566,7 @@ module En57
               "id" => ids[0],
               "type" => "OrderPlaced",
               "data" => '{"amount":100}',
-              "meta" => "{}",
+              "meta" => nil,
               "tags" => "{}",
             },
           ],
