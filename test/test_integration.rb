@@ -4,202 +4,216 @@ require "test_helper"
 
 module En57
   class TestIntegration < IntegrationTest
-    def test_happy_path
-      with_event_store do |event_store|
-        events = [
-          Event.new(id: ids[0], type: "CreditsToppedUp", data: { amount: 100 }),
-          Event.new(id: ids[1], type: "CreditsToppedUp", data: { amount: 50 }),
-        ]
+    ADAPTERS.each do |name, factory|
+      define_method "test_#{name}_happy_path" do
+        with_event_store(factory) do |event_store|
+          events = [
+            Event.new(
+              id: ids[0],
+              type: "CreditsToppedUp",
+              data: {
+                amount: 100,
+              },
+            ),
+            Event.new(
+              id: ids[1],
+              type: "CreditsToppedUp",
+              data: {
+                amount: 50,
+              },
+            ),
+          ]
 
-        assert_equal(events, event_store.append(events).read.each.to_a)
+          assert_equal(events, event_store.append(events).read.each.to_a)
+        end
       end
-    end
 
-    def test_append_with_fail_if_and_no_matches_appends_events
-      with_event_store do |event_store|
-        event = Event.new(id: ids[0], type: "OrderPlaced")
-        event_store.append(
-          [event],
-          fail_if: event_store.read.of_type("PriceChanged"),
-        )
+      define_method "test_#{name}_append_with_fail_if_and_no_matches_appends_events" do
+        with_event_store(factory) do |event_store|
+          event = Event.new(id: ids[0], type: "OrderPlaced")
+          event_store.append(
+            [event],
+            fail_if: event_store.read.of_type("PriceChanged"),
+          )
 
-        assert_equal([event], event_store.read.each.to_a)
+          assert_equal([event], event_store.read.each.to_a)
+        end
       end
-    end
 
-    def test_append_with_fail_if_and_matches_raises_append_condition_violated
-      with_event_store do |event_store|
-        existing_event = Event.new(id: ids[0], type: "OrderPlaced")
-        event_store.append([existing_event])
+      define_method "test_#{name}_append_with_fail_if_and_matches_raises_append_condition_violated" do
+        with_event_store(factory) do |event_store|
+          existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+          event_store.append([existing_event])
 
-        assert_raises(AppendConditionViolated) do
+          assert_raises(AppendConditionViolated) do
+            event_store.append(
+              [Event.new(id: ids[1], type: "ShipmentScheduled")],
+              fail_if: event_store.read.of_type("OrderPlaced"),
+            )
+          end
+
+          assert_equal([existing_event], event_store.read.each.to_a)
+        end
+      end
+
+      define_method "test_#{name}_append_with_after_ignores_matches_at_or_before_cutoff" do
+        with_event_store(factory) do |event_store|
+          existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+          event_store.append([existing_event])
           event_store.append(
             [Event.new(id: ids[1], type: "ShipmentScheduled")],
-            fail_if: event_store.read.of_type("OrderPlaced"),
+            fail_if: event_store.read.of_type("OrderPlaced").after(1),
+          )
+
+          assert_equal(
+            [existing_event, Event.new(id: ids[1], type: "ShipmentScheduled")],
+            event_store.read.each.to_a,
           )
         end
-
-        assert_equal([existing_event], event_store.read.each.to_a)
       end
-    end
 
-    def test_append_with_after_ignores_matches_at_or_before_cutoff
-      with_event_store do |event_store|
-        existing_event = Event.new(id: ids[0], type: "OrderPlaced")
-        event_store.append([existing_event])
-        event_store.append(
-          [Event.new(id: ids[1], type: "ShipmentScheduled")],
-          fail_if: event_store.read.of_type("OrderPlaced").after(1),
-        )
+      define_method "test_#{name}_append_with_after_raises_if_match_is_after_cutoff" do
+        with_event_store(factory) do |event_store|
+          existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+          event_store.append([existing_event])
 
-        assert_equal(
-          [existing_event, Event.new(id: ids[1], type: "ShipmentScheduled")],
-          event_store.read.each.to_a,
-        )
+          assert_raises(AppendConditionViolated) do
+            event_store.append(
+              [Event.new(id: ids[1], type: "ShipmentScheduled")],
+              fail_if: event_store.read.of_type("OrderPlaced").after(0),
+            )
+          end
+
+          assert_equal([existing_event], event_store.read.each.to_a)
+        end
       end
-    end
 
-    def test_append_with_after_raises_if_match_is_after_cutoff
-      with_event_store do |event_store|
-        existing_event = Event.new(id: ids[0], type: "OrderPlaced")
-        event_store.append([existing_event])
+      define_method "test_#{name}_tags_round_trip" do
+        with_event_store(factory) do |event_store|
+          event =
+            Event.new(id: ids[0], type: "OrderPlaced", tags: ["order_id:123"])
 
-        assert_raises(AppendConditionViolated) do
-          event_store.append(
-            [Event.new(id: ids[1], type: "ShipmentScheduled")],
-            fail_if: event_store.read.of_type("OrderPlaced").after(0),
+          assert_equal([event], event_store.append([event]).read.each.to_a)
+        end
+      end
+
+      define_method "test_#{name}_read_filters_after" do
+        with_event_store(factory) do |event_store|
+          events = [
+            Event.new(id: ids[0], type: "OrderPlaced"),
+            Event.new(id: ids[1], type: "PriceChanged"),
+          ]
+
+          assert_equal(
+            events.drop(1),
+            event_store.append(events).read.after(1).each.to_a,
           )
         end
-
-        assert_equal([existing_event], event_store.read.each.to_a)
       end
-    end
 
-    def test_tags_round_trip
-      with_event_store do |event_store|
-        event =
-          Event.new(id: ids[0], type: "OrderPlaced", tags: ["order_id:123"])
+      define_method "test_#{name}_read_filters_by_tags" do
+        with_event_store(factory) do |event_store|
+          events = [
+            Event.new(
+              id: ids[0],
+              type: "OrderPlaced",
+              tags: %w[order_id:123 tenant_id:acme],
+            ),
+            Event.new(
+              id: ids[1],
+              type: "OrderPlaced",
+              tags: %w[order_id:456 tenant_id:acme],
+            ),
+          ]
 
-        assert_equal([event], event_store.append([event]).read.each.to_a)
+          assert_equal(
+            events.take(1),
+            event_store
+              .append(events)
+              .read
+              .with_tag("order_id:123", "tenant_id:acme")
+              .each
+              .to_a,
+          )
+        end
       end
-    end
 
-    def test_read_filters_after
-      with_event_store do |event_store|
-        events = [
-          Event.new(id: ids[0], type: "OrderPlaced"),
-          Event.new(id: ids[1], type: "PriceChanged"),
-        ]
+      define_method "test_#{name}_read_filters_by_type" do
+        with_event_store(factory) do |event_store|
+          events = [
+            Event.new(id: ids[0], type: "OrderPlaced"),
+            Event.new(id: ids[1], type: "PriceChanged"),
+          ]
 
-        assert_equal(
-          events.drop(1),
-          event_store.append(events).read.after(1).each.to_a,
-        )
+          assert_equal(
+            events.take(1),
+            event_store.append(events).read.of_type("OrderPlaced").each.to_a,
+          )
+        end
       end
-    end
 
-    def test_read_filters_by_tags
-      with_event_store do |event_store|
-        events = [
-          Event.new(
-            id: ids[0],
-            type: "OrderPlaced",
-            tags: %w[order_id:123 tenant_id:acme],
-          ),
-          Event.new(
-            id: ids[1],
-            type: "OrderPlaced",
-            tags: %w[order_id:456 tenant_id:acme],
-          ),
-        ]
+      define_method "test_#{name}_read_filters_by_any_of_types" do
+        with_event_store(factory) do |event_store|
+          events = [
+            Event.new(id: ids[0], type: "PriceChanged"),
+            Event.new(id: ids[1], type: "OrderPlaced"),
+            Event.new(id: ids[2], type: "OrderCancelled"),
+          ]
 
-        assert_equal(
-          events.take(1),
-          event_store
-            .append(events)
-            .read
-            .with_tag("order_id:123", "tenant_id:acme")
-            .each
-            .to_a,
-        )
+          assert_equal(
+            events.drop(1),
+            event_store
+              .append(events)
+              .read
+              .of_type("OrderPlaced", "OrderCancelled")
+              .each
+              .to_a,
+          )
+        end
       end
-    end
 
-    def test_read_filters_by_type
-      with_event_store do |event_store|
-        events = [
-          Event.new(id: ids[0], type: "OrderPlaced"),
-          Event.new(id: ids[1], type: "PriceChanged"),
-        ]
+      define_method "test_#{name}_read_filters_by_type_and_tag_on_same_item" do
+        with_event_store(factory) do |event_store|
+          events = [
+            Event.new(id: ids[0], type: "OrderPlaced", tags: ["order_id:123"]),
+            Event.new(id: ids[1], type: "OrderPlaced", tags: ["order_id:456"]),
+            Event.new(id: ids[2], type: "PriceChanged", tags: ["order_id:123"]),
+          ]
 
-        assert_equal(
-          events.take(1),
-          event_store.append(events).read.of_type("OrderPlaced").each.to_a,
-        )
+          assert_equal(
+            events.take(1),
+            event_store
+              .append(events)
+              .read
+              .of_type("OrderPlaced")
+              .with_tag("order_id:123")
+              .each
+              .to_a,
+          )
+        end
       end
-    end
 
-    def test_read_filters_by_any_of_types
-      with_event_store do |event_store|
-        events = [
-          Event.new(id: ids[0], type: "PriceChanged"),
-          Event.new(id: ids[1], type: "OrderPlaced"),
-          Event.new(id: ids[2], type: "OrderCancelled"),
-        ]
+      define_method "test_#{name}_read_or_combines_scopes_as_disjunction" do
+        with_event_store(factory) do |event_store|
+          events = [
+            Event.new(id: ids[0], type: "OrderPlaced", tags: ["order_id:123"]),
+            Event.new(id: ids[1], type: "OrderPlaced", tags: ["order_id:456"]),
+            Event.new(id: ids[2], type: "PriceChanged", tags: ["order_id:999"]),
+            Event.new(id: ids[3], type: "InventoryAdjusted", tags: ["sku:A1"]),
+            Event.new(
+              id: ids[4],
+              type: "ShipmentScheduled",
+              tags: ["order_id:123"],
+            ),
+          ]
+          event_store.append(events)
 
-        assert_equal(
-          events.drop(1),
-          event_store
-            .append(events)
-            .read
-            .of_type("OrderPlaced", "OrderCancelled")
-            .each
-            .to_a,
-        )
-      end
-    end
+          orders =
+            event_store.read.of_type("OrderPlaced").with_tag("order_id:123")
+          prices = event_store.read.of_type("PriceChanged")
 
-    def test_read_filters_by_type_and_tag_on_same_item
-      with_event_store do |event_store|
-        events = [
-          Event.new(id: ids[0], type: "OrderPlaced", tags: ["order_id:123"]),
-          Event.new(id: ids[1], type: "OrderPlaced", tags: ["order_id:456"]),
-          Event.new(id: ids[2], type: "PriceChanged", tags: ["order_id:123"]),
-        ]
-
-        assert_equal(
-          events.take(1),
-          event_store
-            .append(events)
-            .read
-            .of_type("OrderPlaced")
-            .with_tag("order_id:123")
-            .each
-            .to_a,
-        )
-      end
-    end
-
-    def test_read_or_combines_scopes_as_disjunction
-      with_event_store do |event_store|
-        events = [
-          Event.new(id: ids[0], type: "OrderPlaced", tags: ["order_id:123"]),
-          Event.new(id: ids[1], type: "OrderPlaced", tags: ["order_id:456"]),
-          Event.new(id: ids[2], type: "PriceChanged", tags: ["order_id:999"]),
-          Event.new(id: ids[3], type: "InventoryAdjusted", tags: ["sku:A1"]),
-          Event.new(
-            id: ids[4],
-            type: "ShipmentScheduled",
-            tags: ["order_id:123"],
-          ),
-        ]
-        event_store.append(events)
-
-        orders =
-          event_store.read.of_type("OrderPlaced").with_tag("order_id:123")
-        prices = event_store.read.of_type("PriceChanged")
-
-        assert_equal(events.fetch_values(0, 2), (orders | prices).each.to_a)
+          assert_equal(events.fetch_values(0, 2), (orders | prices).each.to_a)
+        end
       end
     end
 
@@ -207,11 +221,8 @@ module En57
 
     def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
 
-    def with_event_store =
-      yield(
-        EventStore.new(
-          Repository.new(PgAdapter.new(SERVER.url), JsonSerializer.new),
-        )
-      )
+    def with_event_store(factory)
+      yield(EventStore.new(Repository.new(factory.call, JsonSerializer.new)))
+    end
   end
 end
