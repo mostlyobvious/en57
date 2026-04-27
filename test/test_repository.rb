@@ -160,6 +160,40 @@ module En57
       end
     end
 
+    def test_append_raises_append_condition_violated_from_serialization_failure_result_sqlstate
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(:exec, nil, ["ROLLBACK"])
+        connection.expect(:exec_params, nil) do
+          raise pg_error(result_sqlstate: "40001")
+        end
+
+        assert_raises(AppendConditionViolated) do
+          Repository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).append([], fail_if: Query.all)
+        end
+      end
+    end
+
+    def test_append_raises_append_condition_violated_from_serialization_failure_sqlstate
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(:exec, nil, ["ROLLBACK"])
+        connection.expect(:exec_params, nil) do
+          raise pg_error(sqlstate: "40001")
+        end
+
+        assert_raises(AppendConditionViolated) do
+          Repository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).append([], fail_if: Query.all)
+        end
+      end
+    end
+
     def test_append_reraises_pg_error_for_non_append_condition_sqlstate
       with_connection_to(connection_uri) do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])

@@ -79,7 +79,58 @@ module En57
       assert_same error, raised
     end
 
+    def test_with_serializable_transaction_unwraps_pg_errors
+      assert_unwraps_pg_error(PG::Error.new("boom"))
+    end
+
+    def test_with_serializable_transaction_unwraps_pg_error_subclasses
+      assert_unwraps_pg_error(PG::TRSerializationFailure.new("boom"))
+    end
+
+    def test_with_serializable_transaction_reraises_non_pg_active_record_errors
+      ar_error = ActiveRecord::StatementInvalid.new("wrapped")
+      ar_error.define_singleton_method(:cause) { RuntimeError.new("boom") }
+
+      raised =
+        assert_raises(ActiveRecord::StatementInvalid) do
+          with_mock_adapter do |pool, connection, _raw_connection, adapter|
+            expect_failed_transaction(pool, connection, ar_error)
+
+            adapter.with_serializable_transaction { flunk "not yielded" }
+          end
+        end
+
+      assert_same ar_error, raised
+    end
+
     private
+
+    def assert_unwraps_pg_error(pg_error)
+      ar_error = ActiveRecord::StatementInvalid.new("wrapped")
+      ar_error.define_singleton_method(:cause) { pg_error }
+
+      raised =
+        assert_raises(PG::Error) do
+          with_mock_adapter do |pool, connection, _raw_connection, adapter|
+            expect_failed_transaction(pool, connection, ar_error)
+
+            adapter.with_serializable_transaction { flunk "not yielded" }
+          end
+        end
+
+      assert_same pg_error, raised
+    end
+
+    def expect_failed_transaction(pool, connection, error)
+      pool.expect(:with_connection, nil) do |&block|
+        block.call(connection)
+        true
+      end
+      connection.expect(:transaction, nil) do |options, &_block|
+        assert_equal({ isolation: :serializable }, options)
+        raise error
+      end
+    end
 
     def with_mock_adapter
       pool = Minitest::Mock.new

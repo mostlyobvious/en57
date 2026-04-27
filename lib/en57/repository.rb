@@ -4,6 +4,11 @@ require "pg"
 
 module En57
   class Repository
+    SQL_STATES = [
+      RAISE_EXCEPTION = "P0001",
+      SERIALIZATION_FAILURE = "40001",
+    ].freeze
+
     def initialize(adapter, serializer)
       @adapter = adapter
       @serializer = serializer
@@ -45,7 +50,7 @@ module En57
       sqlstate =
         e.result&.error_field(PG::Result::PG_DIAG_SQLSTATE) ||
           (e.sqlstate if e.respond_to?(:sqlstate))
-      raise AppendConditionViolated if sqlstate == "P0001"
+      raise AppendConditionViolated if SQL_STATES.include?(sqlstate)
 
       raise
     end
@@ -53,19 +58,21 @@ module En57
     def read(query)
       criteria = query.encoded_criteria.map { |item| JSON.generate(item) }
 
-      @adapter.with_connection do |connection|
-        connection.exec_params(
-          "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
-          [@array_encoder.encode(criteria)],
-        )
-      end.map do |row|
-        Event.new(
-          id: row.fetch("id"),
-          type: row.fetch("type"),
-          data: @serializer.load(row.fetch("data"), row.fetch("meta")),
-          tags: @array_decoder.decode(row.fetch("tags")),
-        )
-      end
+      @adapter
+        .with_connection do |connection|
+          connection.exec_params(
+            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            [@array_encoder.encode(criteria)],
+          )
+        end
+        .map do |row|
+          Event.new(
+            id: row.fetch("id"),
+            type: row.fetch("type"),
+            data: @serializer.load(row.fetch("data"), row.fetch("meta")),
+            tags: @array_decoder.decode(row.fetch("tags")),
+          )
+        end
     end
   end
 end

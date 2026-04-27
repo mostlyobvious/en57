@@ -44,7 +44,7 @@ module En57
                     )
                   end
                 end
-              rescue AppendConditionViolated, PG::TRSerializationFailure
+              rescue AppendConditionViolated
               end
             end
           threads.each(&:join)

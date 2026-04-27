@@ -109,7 +109,7 @@ begin
     ],
     fail_if: account_scope.of_type("CreditsUsed"),
   )
-rescue En57::AppendConditionViolated, PG::TRSerializationFailure
+rescue En57::AppendConditionViolated
   # lost the race; another writer already consumed credits
 end
 ```
