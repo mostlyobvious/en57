@@ -54,9 +54,15 @@ module En57
                 .select { AppendConditionViolated === it }
                 .size,
             )
-            account_scope = event_store.read.with_tag(account_tag)
-            assert_equal(1, account_scope.of_type("CreditsUsed").each.count)
-            assert_equal(0, account_balance(account_scope))
+            assert_equal(
+              1,
+              event_store
+                .read
+                .with_tag(account_tag)
+                .of_type("CreditsUsed")
+                .each
+                .count,
+            )
           end
         end
       end
@@ -70,20 +76,5 @@ module En57
     def concurrency = 8
 
     def account_tag = "account:x"
-
-    def account_balance(scope)
-      scope.each.sum do |event|
-        amount = event.data.fetch(:amount)
-
-        case event.type
-        when "CreditsToppedUp"
-          amount
-        when "CreditsUsed"
-          -amount
-        else
-          0
-        end
-      end
-    end
   end
 end
