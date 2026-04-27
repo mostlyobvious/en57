@@ -20,7 +20,7 @@ module En57
       event = Event.new(type: "CreditsToppedUp")
 
       with_repository do |repository|
-        repository.expect(:read, [event], [Query.all])
+        repository.expect(:read, [[event, 1]], [Query.all])
 
         result = EventStore.new(repository).read
 

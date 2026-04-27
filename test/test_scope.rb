@@ -16,15 +16,39 @@ module En57
       end
     end
 
+    def test_each_with_position_without_block_returns_enumerator
+      with_repository do |repository|
+        repository.expect(:read, [[:event_1, 1], [:event_2, 2]], [Query.all])
+
+        assert_equal(
+          [[:event_1, 1], [:event_2, 2]],
+          Scope.new(repository, Query.all).each_with_position.to_a,
+        )
+      end
+    end
+
     def test_each_with_block_yields_events
       with_repository do |repository|
         scope = Scope.new(repository, Query.all)
         yielded = []
-        repository.expect(:read, [1, 2], [Query.all])
+        repository.expect(:read, [[:event_1, 1], [:event_2, 2]], [Query.all])
 
         scope.each { |event| yielded << event }
 
-        assert_equal([1, 2], yielded)
+        assert_equal(%i[event_1 event_2], yielded)
+      end
+    end
+
+    def test_each_with_position_yields_events_and_positions
+      with_repository do |repository|
+        yielded = []
+        repository.expect(:read, [[:event_1, 1], [:event_2, 2]], [Query.all])
+
+        Scope
+          .new(repository, Query.all)
+          .each_with_position { |event, position| yielded << [event, position] }
+
+        assert_equal([[:event_1, 1], [:event_2, 2]], yielded)
       end
     end
 
@@ -110,13 +134,29 @@ module En57
 
     def test_merged_scope_each_without_block_returns_enumerator
       with_repository do |repository|
-        merged =
-          Scope
-            .new(repository, Query.all)
-            .of_type("OrderPlaced")
-            .or(Scope.new(repository, Query.all).with_tag("order_id:123"))
+        assert_instance_of(Enumerator, merged_scope(repository).each)
+      end
+    end
 
-        assert_instance_of(Enumerator, merged.each)
+    def test_merged_scope_each_with_position_without_block_returns_enumerator
+      with_repository do |repository|
+        repository.expect(
+          :read,
+          [[:event_1, 1], [:event_2, 2]],
+          [
+            Query.new(
+              criteria: [
+                Query::Criteria.new(types: ["OrderPlaced"], tags: []),
+                Query::Criteria.new(types: [], tags: ["order_id:123"]),
+              ],
+            ),
+          ],
+        )
+
+        assert_equal(
+          [[:event_1, 1], [:event_2, 2]],
+          merged_scope(repository).each_with_position.to_a,
+        )
       end
     end
 
@@ -131,7 +171,7 @@ module En57
 
         repository.expect(
           :read,
-          [1, 2],
+          [[:event_1, 1], [:event_2, 2]],
           [
             Query.new(
               criteria: [
@@ -144,7 +184,32 @@ module En57
 
         merged.each { |event| yielded << event }
 
-        assert_equal([1, 2], yielded)
+        assert_equal(%i[event_1 event_2], yielded)
+      end
+    end
+
+    def test_merged_scope_each_with_position_yields_events_and_positions
+      with_repository do |repository|
+        yielded = []
+
+        repository.expect(
+          :read,
+          [[:event_1, 1], [:event_2, 2]],
+          [
+            Query.new(
+              criteria: [
+                Query::Criteria.new(types: ["OrderPlaced"], tags: []),
+                Query::Criteria.new(types: [], tags: ["order_id:123"]),
+              ],
+            ),
+          ],
+        )
+
+        merged_scope(repository).each_with_position do |event, position|
+          yielded << [event, position]
+        end
+
+        assert_equal([[:event_1, 1], [:event_2, 2]], yielded)
       end
     end
 
@@ -251,6 +316,13 @@ module En57
     end
 
     private
+
+    def merged_scope(repository)
+      Scope
+        .new(repository, Query.all)
+        .of_type("OrderPlaced")
+        .or(Scope.new(repository, Query.all).with_tag("order_id:123"))
+    end
 
     def with_repository
       repository = Minitest::Mock.new

@@ -70,6 +70,12 @@ store.append(
 events = store.read.each.to_a
 ```
 
+### Read events with positions
+
+```ruby
+event, position = store.read.each_with_position.first
+```
+
 ### Read events filtered by tags
 
 ```ruby

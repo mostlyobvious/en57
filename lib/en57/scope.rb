@@ -14,7 +14,15 @@ module En57
     def each(&block)
       return enum_for unless block
 
-      @repository.read(@query).each(&block)
+      @repository.read(@query).each { |event, _position| yield event }
+    end
+
+    def each_with_position(&block)
+      return enum_for(__method__) unless block
+
+      @repository.read(@query).each do |event, position|
+        yield event, position
+      end
     end
 
     def to_query = @query
@@ -34,7 +42,15 @@ module En57
     def each(&block)
       return enum_for unless block
 
-      @repository.read(@query).each(&block)
+      @repository.read(@query).each { |event, _position| yield event }
+    end
+
+    def each_with_position(&block)
+      return enum_for(__method__) unless block
+
+      @repository.read(@query).each do |event, position|
+        yield event, position
+      end
     end
 
     def to_query = @query

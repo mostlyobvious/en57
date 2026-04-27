@@ -61,17 +61,20 @@ module En57
       @adapter
         .with_connection do |connection|
           connection.exec_params(
-            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
             [@array_encoder.encode(criteria)],
           )
         end
         .map do |row|
-          Event.new(
-            id: row.fetch("id"),
-            type: row.fetch("type"),
-            data: @serializer.load(row.fetch("data"), row.fetch("meta")),
-            tags: @array_decoder.decode(row.fetch("tags")),
-          )
+          [
+            Event.new(
+              id: row.fetch("id"),
+              type: row.fetch("type"),
+              data: @serializer.load(row.fetch("data"), row.fetch("meta")),
+              tags: @array_decoder.decode(row.fetch("tags")),
+            ),
+            Integer(row.fetch("position")),
+          ]
         end
     end
   end

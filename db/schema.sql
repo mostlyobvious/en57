@@ -81,7 +81,13 @@ END;
 $$;
 
 CREATE FUNCTION read_events (criteria jsonb[])
-    RETURNS SETOF event_with_tags
+    RETURNS TABLE (
+        "position" bigint,
+        id uuid,
+        type text,
+        data jsonb,
+        meta jsonb,
+        tags text[])
     LANGUAGE SQL
     AS $$
     WITH parsed_criteria AS (
@@ -130,6 +136,7 @@ filtered_events AS (
                             t.event_id = e.id
                             AND t.value = req.value))))
     SELECT
+        e.position,
         e.id,
         e.type,
         e.data,

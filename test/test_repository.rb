@@ -232,6 +232,7 @@ module En57
           :exec_params,
           [
             {
+              "position" => "1",
               "id" => ids[0],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":100}',
@@ -239,6 +240,7 @@ module En57
               "tags" => "{order_id:123}",
             },
             {
+              "position" => "2",
               "id" => ids[1],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":50}',
@@ -247,29 +249,35 @@ module En57
             },
           ],
           [
-            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
             [array_encoder.encode([])],
           ],
         )
 
         assert_equal(
           [
-            Event.new(
-              id: ids[0],
-              type: "CreditsToppedUp",
-              data: {
-                "amount" => 100,
-              },
-              tags: ["order_id:123"],
-            ),
-            Event.new(
-              id: ids[1],
-              type: "CreditsToppedUp",
-              data: {
-                "amount" => 50,
-              },
-              tags: ["order_id:234"],
-            ),
+            [
+              Event.new(
+                id: ids[0],
+                type: "CreditsToppedUp",
+                data: {
+                  "amount" => 100,
+                },
+                tags: ["order_id:123"],
+              ),
+              1,
+            ],
+            [
+              Event.new(
+                id: ids[1],
+                type: "CreditsToppedUp",
+                data: {
+                  "amount" => 50,
+                },
+                tags: ["order_id:234"],
+              ),
+              2,
+            ],
           ],
           Repository.new(
             PgAdapter.new(connection_uri),
@@ -289,6 +297,7 @@ module En57
           :exec_params,
           [
             {
+              "position" => "1",
               "id" => ids[0],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":100}',
@@ -297,21 +306,24 @@ module En57
             },
           ],
           [
-            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
             [array_encoder.encode(['{"tags":["order_id:123"]}'])],
           ],
         )
 
         assert_equal(
           [
-            Event.new(
-              id: ids[0],
-              type: "CreditsToppedUp",
-              data: {
-                "amount" => 100,
-              },
-              tags: ["order_id:123"],
-            ),
+            [
+              Event.new(
+                id: ids[0],
+                type: "CreditsToppedUp",
+                data: {
+                  "amount" => 100,
+                },
+                tags: ["order_id:123"],
+              ),
+              1,
+            ],
           ],
           Repository.new(
             PgAdapter.new(connection_uri),
@@ -328,6 +340,7 @@ module En57
           :exec_params,
           [
             {
+              "position" => "1",
               "id" => ids[0],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":100}',
@@ -336,21 +349,24 @@ module En57
             },
           ],
           [
-            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
             [array_encoder.encode(["{}"])],
           ],
         )
 
         assert_equal(
           [
-            Event.new(
-              id: ids[0],
-              type: "CreditsToppedUp",
-              data: {
-                "amount" => 100,
-              },
-              tags: ["order_id:123"],
-            ),
+            [
+              Event.new(
+                id: ids[0],
+                type: "CreditsToppedUp",
+                data: {
+                  "amount" => 100,
+                },
+                tags: ["order_id:123"],
+              ),
+              1,
+            ],
           ],
           Repository.new(
             PgAdapter.new(connection_uri),
@@ -373,6 +389,7 @@ module En57
           :exec_params,
           [
             {
+              "position" => "1",
               "id" => ids[0],
               "type" => "CreditsToppedUp",
               "data" => '{"amount":100}',
@@ -381,7 +398,7 @@ module En57
             },
           ],
           [
-            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
             [
               array_encoder.encode(
                 %w[{"tags":["order_id:123"]} {"tags":["order_id:456"]}],
@@ -392,14 +409,17 @@ module En57
 
         assert_equal(
           [
-            Event.new(
-              id: ids[0],
-              type: "CreditsToppedUp",
-              data: {
-                "amount" => 100,
-              },
-              tags: ["order_id:123"],
-            ),
+            [
+              Event.new(
+                id: ids[0],
+                type: "CreditsToppedUp",
+                data: {
+                  "amount" => 100,
+                },
+                tags: ["order_id:123"],
+              ),
+              1,
+            ],
           ],
           Repository.new(
             PgAdapter.new(connection_uri),
@@ -419,7 +439,7 @@ module En57
           :exec_params,
           [],
           [
-            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
             [array_encoder.encode(['{"after":42}'])],
           ],
         )
@@ -444,6 +464,7 @@ module En57
           :exec_params,
           [
             {
+              "position" => "1",
               "id" => ids[0],
               "type" => "OrderPlaced",
               "data" => '{"amount":100}',
@@ -452,21 +473,24 @@ module En57
             },
           ],
           [
-            "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
             [array_encoder.encode(['{"types":["OrderPlaced"]}'])],
           ],
         )
 
         assert_equal(
           [
-            Event.new(
-              id: ids[0],
-              type: "OrderPlaced",
-              data: {
-                "amount" => 100,
-              },
-              tags: [],
-            ),
+            [
+              Event.new(
+                id: ids[0],
+                type: "OrderPlaced",
+                data: {
+                  "amount" => 100,
+                },
+                tags: [],
+              ),
+              1,
+            ],
           ],
           Repository.new(
             PgAdapter.new(connection_uri),

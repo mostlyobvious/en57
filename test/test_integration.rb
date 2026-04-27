@@ -28,6 +28,20 @@ module En57
         end
       end
 
+      define_method "test_#{name}_read_with_position_yields_events_and_positions" do
+        with_event_store(factory) do |event_store|
+          events = [
+            Event.new(id: ids[0], type: "OrderPlaced"),
+            Event.new(id: ids[1], type: "PriceChanged"),
+          ]
+
+          assert_equal(
+            events.map.with_index(1) { |event, position| [event, position] },
+            event_store.append(events).read.each_with_position.to_a,
+          )
+        end
+      end
+
       define_method "test_#{name}_append_with_fail_if_and_no_matches_appends_events" do
         with_event_store(factory) do |event_store|
           event = Event.new(id: ids[0], type: "OrderPlaced")
