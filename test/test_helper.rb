@@ -15,7 +15,8 @@ module En57
   class IntegrationTest < Minitest::Test
     SERVER = PgEphemeral.start
     CONNECTION = PG.connect(SERVER.url)
-    SEQUEL_DB = Sequel.connect(SERVER.url)
+    SEQUEL_DB =
+      Sequel.connect(SERVER.url, preconnect: :concurrently, max_connections: 8)
     ActiveRecord::Base.establish_connection(SERVER.url)
     AR_POOL = ActiveRecord::Base.connection_pool
     ADAPTERS = {
