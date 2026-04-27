@@ -3,7 +3,7 @@
 require "pg"
 
 module En57
-  class PgRepository
+  class Repository
     def initialize(adapter, serializer)
       @adapter = adapter
       @serializer = serializer

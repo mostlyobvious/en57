@@ -58,7 +58,7 @@ module En57
     def with_event_store =
       yield(
         EventStore.new(
-          PgRepository.new(PgAdapter.new(SERVER.url), JsonSerializer.new),
+          Repository.new(PgAdapter.new(SERVER.url), JsonSerializer.new),
         )
       )
 

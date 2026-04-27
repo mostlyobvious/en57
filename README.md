@@ -9,7 +9,7 @@ DCB-compatible event store library in Ruby with support for PostgreSQL.
 ```ruby
 store =
   En57::EventStore.new(
-    En57::PgRepository.new(
+    En57::Repository.new(
       En57::PgAdapter.new("postgres://localhost:5432/en57"),
       En57::JsonSerializer.new,
     ),
