@@ -20,7 +20,7 @@ module En57
     ActiveRecord::Base.establish_connection(SERVER.url)
     AR_POOL = ActiveRecord::Base.connection_pool
     ADAPTERS = {
-      pg: -> { PgAdapter.new(SERVER.url) },
+      pg: -> { PgAdapter.new(SERVER.url, max_connections: 8) },
       sequel: -> { SequelAdapter.new(SEQUEL_DB) },
       active_record: -> { ActiveRecordAdapter.new(AR_POOL) },
     }

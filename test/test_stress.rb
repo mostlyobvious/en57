@@ -21,16 +21,17 @@ module En57
             ],
           )
 
-          barrier = Concurrent::CyclicBarrier.new(concurrency)
-          threads =
-            Array.new(concurrency) do
-              Thread.new do
-                with_event_store(factory) do |event_store_|
+            barrier = Concurrent::CyclicBarrier.new(concurrency)
+            threads =
+              Array.new(concurrency) do
+                Thread.new do
+                  Thread.current.report_on_exception = false
+
+                  account_scope = event_store.read.with_tag(account_tag)
                   barrier.wait
-                  account_scope = event_store_.read.with_tag(account_tag)
 
                   if account_balance(account_scope) >= 100
-                    event_store_.append(
+                    event_store.append(
                       [
                         Event.new(
                           type: "CreditsUsed",
@@ -43,19 +44,24 @@ module En57
                       fail_if: account_scope.of_type("CreditsUsed"),
                     )
                   end
+                rescue AppendConditionViolated => e
+                  e
                 end
-              rescue AppendConditionViolated
               end
-            end
-          threads.each(&:join)
 
-          account_scope = event_store.read.with_tag(account_tag)
-
-          assert_equal 1, account_scope.of_type("CreditsUsed").each.count
-          assert_equal 0, account_balance(account_scope)
+            assert_equal(
+              (concurrency - 1),
+              threads
+                .map(&:value)
+                .select { AppendConditionViolated === it }
+                .size,
+            )
+            account_scope = event_store.read.with_tag(account_tag)
+            assert_equal(1, account_scope.of_type("CreditsUsed").each.count)
+            assert_equal(0, account_balance(account_scope))
+          end
         end
       end
-    end
 
     private
 
