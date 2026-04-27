@@ -69,6 +69,33 @@ module En57
       end
     end
 
+    def test_append_persists_empty_event_data_as_null
+      expected_events =
+        array_encoder.encode(
+          [record_encoder.encode([ids[0], "OrderPlaced", nil, "{}", "{}"])],
+        )
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
+        connection.expect(
+          :exec_params,
+          nil,
+          [
+            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            [expected_events, "{}"],
+          ],
+        )
+        connection.expect(:exec, nil, ["COMMIT"])
+
+        Repository.new(
+          PgAdapter.new(connection_uri),
+          JsonSerializer.new,
+        ).append(
+          [Event.new(id: ids[0], type: "OrderPlaced")],
+          fail_if: Query.all,
+        )
+      end
+    end
+
     def test_append_passes_fail_if_and_after_conditions
       with_connection_to(connection_uri) do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
@@ -279,6 +306,36 @@ module En57
               2,
             ],
           ],
+          Repository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).read(Query.all),
+        )
+      end
+    end
+
+    def test_read_events_with_null_data_returns_empty_hash
+      with_connection_to(connection_uri) do |connection|
+        connection.expect(
+          :exec_params,
+          [
+            {
+              "position" => "1",
+              "id" => ids[0],
+              "type" => "OrderPlaced",
+              "data" => nil,
+              "meta" => "{}",
+              "tags" => "{}",
+            },
+          ],
+          [
+            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            [array_encoder.encode([])],
+          ],
+        )
+
+        assert_equal(
+          [[Event.new(id: ids[0], type: "OrderPlaced", data: {}), 1]],
           Repository.new(
             PgAdapter.new(connection_uri),
             JsonSerializer.new,
