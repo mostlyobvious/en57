@@ -22,5 +22,6 @@ Gem::Specification.new do |spec|
   spec.extra_rdoc_files = %w[README.md]
 
   spec.required_ruby_version = ">= 4.0"
+  spec.add_dependency "connection_pool", "~> 3.0"
   spec.add_dependency "pg", "~> 1.6.3"
 end

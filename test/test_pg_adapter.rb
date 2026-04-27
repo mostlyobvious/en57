@@ -19,6 +19,62 @@ module En57
       end
     end
 
+    def test_with_connection_uses_five_connections_by_default
+      with_connection_count(
+        6,
+      ) do |connections, acquired, release, connection_count|
+        adapter = PgAdapter.new(connection_uri)
+
+        threads =
+          6.times.map do
+            Thread.new do
+              adapter.with_connection do |connection|
+                acquired << connection
+                release.pop
+              end
+            end
+          end
+
+        assert_equal connections.take(5), 5.times.map { acquired.pop }
+        assert_equal 5, connection_count.call
+        assert_raises(ThreadError) { acquired.pop(true) }
+
+        release << true
+        assert_includes connections.take(5), acquired.pop
+
+        5.times { release << true }
+        threads.each(&:value)
+      end
+    end
+
+    def test_with_connection_honors_max_connections
+      with_connection_count(
+        3,
+      ) do |connections, acquired, release, connection_count|
+        adapter = PgAdapter.new(connection_uri, max_connections: 2)
+
+        threads =
+          3.times.map do
+            Thread.new do
+              adapter.with_connection do |connection|
+                acquired << connection
+                release.pop
+              end
+            end
+          end
+
+        assert_equal connections.take(2), 2.times.map { acquired.pop }
+        assert_equal 2, connection_count.call
+        assert_raises(ThreadError) { acquired.pop(true) }
+
+        release << true
+        assert_includes connections.take(2), acquired.pop
+
+        2.times { release << true }
+        threads.each(&:value)
+      end
+    end
+
     def test_with_serializable_transaction_commits_on_success
       with_mock_adapter do |connection, adapter|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
@@ -65,6 +121,22 @@ module En57
     private
 
     def connection_uri = "postgres://localhost:5432/en57_test"
+
+    def with_connection_count(size)
+      connections = Array.new(size) { Object.new }
+      acquired = Queue.new
+      release = Queue.new
+      connection_count = 0
+
+      PG.stub(
+        :connect,
+        ->(actual_connection_uri) do
+          connection_count += 1
+          assert_equal connection_uri, actual_connection_uri
+          connections.fetch(connection_count - 1)
+        end,
+      ) { yield connections, acquired, release, -> { connection_count } }
+    end
 
     def with_mock_adapter
       connection = Minitest::Mock.new

@@ -12,7 +12,10 @@ Use `PgAdapter` when En57 should own its PostgreSQL connection.
 store =
   En57::EventStore.new(
     En57::Repository.new(
-      En57::PgAdapter.new("postgres://localhost:5432/en57"),
+      En57::PgAdapter.new(
+        "postgres://localhost:5432/en57",
+        max_connections: 8,
+      ),
       En57::JsonSerializer.new,
     ),
   )
