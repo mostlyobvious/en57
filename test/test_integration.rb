@@ -88,6 +88,21 @@ module En57
         end
       end
 
+      define_method "test_#{name}_append_with_duplicate_id_raises_unique_violation" do
+        with_event_store(factory) do |event_store|
+          existing_event = Event.new(id: ids[0], type: "OrderPlaced")
+          event_store.append([existing_event])
+
+          assert_raises(PG::UniqueViolation) do
+            event_store.append(
+              [Event.new(id: ids[0], type: "ShipmentScheduled")],
+            )
+          end
+
+          assert_equal([existing_event], event_store.read.each.to_a)
+        end
+      end
+
       define_method "test_#{name}_tags_round_trip" do
         with_event_store(factory) do |event_store|
           event =
