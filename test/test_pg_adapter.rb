@@ -79,8 +79,9 @@ module En57
         end,
       ) do
         yield connection, PgAdapter.new(connection_uri), -> { connection_count }
+      ensure
+        connection.verify
       end
-      connection.verify
     end
   end
 end
