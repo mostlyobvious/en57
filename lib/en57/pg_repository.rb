@@ -5,7 +5,7 @@ require "pg"
 module En57
   class PgRepository
     def initialize(connection_uri, serializer)
-      @connection_uri = connection_uri
+      @adapter = PgAdapter.new(connection_uri)
       @serializer = serializer
       @record_encoder = PG::TextEncoder::Record.new
       @array_encoder = PG::TextEncoder::Array.new
@@ -32,7 +32,7 @@ module En57
         :fail_if_events_match
       ] = fail_if_events_match unless fail_if_events_match.empty?
 
-      with_serializable_transaction do |connection|
+      @adapter.with_serializable_transaction do |connection|
         connection.exec_params(
           "SELECT append_events($1::event_with_tags[], $2::jsonb)",
           [
@@ -53,7 +53,7 @@ module En57
     def read(query)
       criteria = query.encoded_criteria.map { |item| JSON.generate(item) }
 
-      with_connection do |connection|
+      @adapter.with_connection do |connection|
         connection.exec_params(
           "SELECT id, type, data, meta, tags FROM read_events($1::jsonb[])",
           [@array_encoder.encode(criteria)],
@@ -66,24 +66,6 @@ module En57
           tags: @array_decoder.decode(row.fetch("tags")),
         )
       end
-    end
-
-    private
-
-    def with_serializable_transaction
-      with_connection do |connection|
-        connection.exec("BEGIN ISOLATION LEVEL SERIALIZABLE")
-        yield connection
-        connection.exec("COMMIT")
-      rescue StandardError
-        connection.exec("ROLLBACK")
-        raise
-      end
-    end
-
-    def with_connection
-      @connection ||= PG.connect(@connection_uri)
-      yield @connection
     end
   end
 end
