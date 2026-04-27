@@ -56,7 +56,11 @@ module En57
     private
 
     def with_event_store =
-      yield EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))
+      yield(
+        EventStore.new(
+          PgRepository.new(PgAdapter.new(SERVER.url), JsonSerializer.new),
+        )
+      )
 
     def concurrency = 8
 

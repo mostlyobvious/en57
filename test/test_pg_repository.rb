@@ -42,7 +42,10 @@ module En57
         )
         connection.expect(:exec, nil, ["COMMIT"])
 
-        PgRepository.new(connection_uri, JsonSerializer.new).append(
+        PgRepository.new(
+          PgAdapter.new(connection_uri),
+          JsonSerializer.new,
+        ).append(
           [
             Event.new(
               id: ids[0],
@@ -82,7 +85,10 @@ module En57
         )
         connection.expect(:exec, nil, ["COMMIT"])
 
-        PgRepository.new(connection_uri, JsonSerializer.new).append(
+        PgRepository.new(
+          PgAdapter.new(connection_uri),
+          JsonSerializer.new,
+        ).append(
           [],
           fail_if:
             Query.new(
@@ -112,10 +118,10 @@ module En57
         end
 
         assert_raises(PG::Error) do
-          PgRepository.new(connection_uri, JsonSerializer.new).append(
-            [],
-            fail_if: Query.all,
-          )
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).append([], fail_if: Query.all)
         end
       end
     end
@@ -129,10 +135,10 @@ module En57
         end
 
         assert_raises(AppendConditionViolated) do
-          PgRepository.new(connection_uri, JsonSerializer.new).append(
-            [],
-            fail_if: Query.all,
-          )
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).append([], fail_if: Query.all)
         end
       end
     end
@@ -146,10 +152,10 @@ module En57
         end
 
         assert_raises(AppendConditionViolated) do
-          PgRepository.new(connection_uri, JsonSerializer.new).append(
-            [],
-            fail_if: Query.all,
-          )
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).append([], fail_if: Query.all)
         end
       end
     end
@@ -163,10 +169,10 @@ module En57
         end
 
         assert_raises(PG::Error) do
-          PgRepository.new(connection_uri, JsonSerializer.new).append(
-            [],
-            fail_if: Query.all,
-          )
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).append([], fail_if: Query.all)
         end
       end
     end
@@ -178,10 +184,10 @@ module En57
         connection.expect(:exec_params, nil) { raise RuntimeError, "boom" }
 
         assert_raises(RuntimeError) do
-          PgRepository.new(connection_uri, JsonSerializer.new).append(
-            [],
-            fail_if: Query.all,
-          )
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).append([], fail_if: Query.all)
         end
       end
     end
@@ -231,7 +237,10 @@ module En57
               tags: ["order_id:234"],
             ),
           ],
-          PgRepository.new(connection_uri, JsonSerializer.new).read(Query.all),
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).read(Query.all),
         )
       end
     end
@@ -270,7 +279,10 @@ module En57
               tags: ["order_id:123"],
             ),
           ],
-          PgRepository.new(connection_uri, JsonSerializer.new).read(query),
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).read(query),
         )
       end
     end
@@ -306,7 +318,10 @@ module En57
               tags: ["order_id:123"],
             ),
           ],
-          PgRepository.new(connection_uri, JsonSerializer.new).read(query),
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).read(query),
         )
       end
     end
@@ -352,7 +367,10 @@ module En57
               tags: ["order_id:123"],
             ),
           ],
-          PgRepository.new(connection_uri, JsonSerializer.new).read(query),
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).read(query),
         )
       end
     end
@@ -374,7 +392,10 @@ module En57
 
         assert_equal(
           [],
-          PgRepository.new(connection_uri, JsonSerializer.new).read(query),
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).read(query),
         )
       end
     end
@@ -413,7 +434,10 @@ module En57
               tags: [],
             ),
           ],
-          PgRepository.new(connection_uri, JsonSerializer.new).read(query),
+          PgRepository.new(
+            PgAdapter.new(connection_uri),
+            JsonSerializer.new,
+          ).read(query),
         )
       end
     end

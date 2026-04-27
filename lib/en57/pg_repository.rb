@@ -4,8 +4,8 @@ require "pg"
 
 module En57
   class PgRepository
-    def initialize(connection_uri, serializer)
-      @adapter = PgAdapter.new(connection_uri)
+    def initialize(adapter, serializer)
+      @adapter = adapter
       @serializer = serializer
       @record_encoder = PG::TextEncoder::Record.new
       @array_encoder = PG::TextEncoder::Array.new

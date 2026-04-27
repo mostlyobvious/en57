@@ -208,6 +208,10 @@ module En57
     def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
 
     def with_event_store =
-      yield EventStore.new(PgRepository.new(SERVER.url, JsonSerializer.new))
+      yield(
+        EventStore.new(
+          PgRepository.new(PgAdapter.new(SERVER.url), JsonSerializer.new),
+        )
+      )
   end
 end
