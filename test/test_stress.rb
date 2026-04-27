@@ -30,20 +30,18 @@ module En57
                   account_scope = event_store.read.with_tag(account_tag)
                   barrier.wait
 
-                  if account_balance(account_scope) >= 100
-                    event_store.append(
-                      [
-                        Event.new(
-                          type: "CreditsUsed",
-                          data: {
-                            amount: 100,
-                          },
-                          tags: [account_tag],
-                        ),
-                      ],
-                      fail_if: account_scope.of_type("CreditsUsed"),
-                    )
-                  end
+                  event_store.append(
+                    [
+                      Event.new(
+                        type: "CreditsUsed",
+                        data: {
+                          amount: 100,
+                        },
+                        tags: [account_tag],
+                      ),
+                    ],
+                    fail_if: account_scope.of_type("CreditsUsed"),
+                  )
                 rescue AppendConditionViolated => e
                   e
                 end
