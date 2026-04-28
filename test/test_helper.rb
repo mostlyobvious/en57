@@ -22,7 +22,7 @@ module En57
         preconnect: :concurrently,
         max_connections: POOL_SIZE,
       )
-    ActiveRecord::Base.establish_connection(SERVER.url)
+    ActiveRecord::Base.establish_connection("#{SERVER.url}&pool=#{POOL_SIZE}")
     AR_POOL = ActiveRecord::Base.connection_pool
     ADAPTERS = {
       pg: -> { PgAdapter.new(SERVER.url, max_connections: POOL_SIZE) },
