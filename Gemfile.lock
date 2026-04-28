@@ -2,7 +2,6 @@ PATH
   remote: .
   specs:
     en57 (0.1.0)
-      connection_pool (~> 3.0)
       pg (~> 1.6.3)
 
 GEM
@@ -121,6 +120,7 @@ DEPENDENCIES
   activerecord
   bigdecimal
   concurrent-ruby
+  connection_pool
   en57!
   irb
   m

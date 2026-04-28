@@ -6,6 +6,7 @@ gemspec
 
 gem "activerecord"
 gem "bigdecimal"
+gem "connection_pool"
 gem "irb"
 gem "rake"
 gem "m"
