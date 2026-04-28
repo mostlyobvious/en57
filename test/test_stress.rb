@@ -70,7 +70,7 @@ module En57
       yield EventStore.new(Repository.new(factory.call, JsonSerializer.new))
     end
 
-    def concurrency = 8
+    def concurrency = POOL_SIZE
 
     def account_tag = "account:x"
   end

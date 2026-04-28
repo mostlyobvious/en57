@@ -13,14 +13,19 @@ require "pg_ephemeral"
 
 module En57
   class IntegrationTest < Minitest::Test
+    POOL_SIZE = 8
     SERVER = PgEphemeral.start
     CONNECTION = PG.connect(SERVER.url)
     SEQUEL_DB =
-      Sequel.connect(SERVER.url, preconnect: :concurrently, max_connections: 8)
+      Sequel.connect(
+        SERVER.url,
+        preconnect: :concurrently,
+        max_connections: POOL_SIZE,
+      )
     ActiveRecord::Base.establish_connection(SERVER.url)
     AR_POOL = ActiveRecord::Base.connection_pool
     ADAPTERS = {
-      pg: -> { PgAdapter.new(SERVER.url, max_connections: 8) },
+      pg: -> { PgAdapter.new(SERVER.url, max_connections: POOL_SIZE) },
       sequel: -> { SequelAdapter.new(SEQUEL_DB) },
       active_record: -> { ActiveRecordAdapter.new(AR_POOL) },
     }
