@@ -6,50 +6,30 @@ DCB-compatible event store library in Ruby with support for PostgreSQL.
 
 ### Connect with raw pg
 
-Use `PgAdapter` when your app already owns a pg connection or connection pool.
+Use `EventStore.for_pg` when En57 should own a pg connection.
 
 ```ruby
-pool = ConnectionPool.new(size: 8) { PG.connect("postgres://localhost:5432/en57") }
-
-store =
-  En57::EventStore.new(
-    En57::Repository.new(
-      En57::PgAdapter.new(pool),
-      En57::JsonSerializer.new,
-    ),
-  )
+store = En57::EventStore.for_pg("postgres://localhost:5432/en57")
 ```
 
 ### Connect with Sequel
 
-Use `SequelAdapter` when your app already owns a Sequel database.
+Use `EventStore.for_sequel` when your app already owns a Sequel database.
 
 ```ruby
 database = Sequel.connect("postgres://localhost:5432/en57")
 
-store =
-  En57::EventStore.new(
-    En57::Repository.new(
-      En57::SequelAdapter.new(database),
-      En57::JsonSerializer.new,
-    ),
-  )
+store = En57::EventStore.for_sequel(database)
 ```
 
 ### Connect with ActiveRecord
 
-Use `ActiveRecordAdapter` when your app already owns an ActiveRecord pool.
+Use `EventStore.for_active_record` when your app uses ActiveRecord.
 
 ```ruby
 ActiveRecord::Base.establish_connection("postgres://localhost:5432/en57")
 
-store =
-  En57::EventStore.new(
-    En57::Repository.new(
-      En57::ActiveRecordAdapter.new(ActiveRecord::Base.connection_pool),
-      En57::JsonSerializer.new,
-    ),
-  )
+store = En57::EventStore.for_active_record
 ```
 
 ### Append events unconditionally

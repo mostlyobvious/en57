@@ -21,4 +21,10 @@ module En57
       raise e.wrapped_exception
     end
   end
+
+  class EventStore
+    def self.for_sequel(database)
+      new(Repository.new(SequelAdapter.new(database), JsonSerializer.new))
+    end
+  end
 end

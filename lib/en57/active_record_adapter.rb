@@ -22,4 +22,15 @@ module En57
       end
     end
   end
+
+  class EventStore
+    def self.for_active_record(model = ActiveRecord::Base)
+      new(
+        Repository.new(
+          ActiveRecordAdapter.new(model.connection_pool),
+          JsonSerializer.new,
+        ),
+      )
+    end
+  end
 end

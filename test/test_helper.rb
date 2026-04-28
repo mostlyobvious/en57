@@ -4,12 +4,16 @@ require "minitest/autorun"
 require "minitest/mock"
 require "mutant/minitest/coverage"
 
+# optional dependencies
 require "sequel"
 require "active_record"
+require "connection_pool"
+
 require "en57"
+
+# test dependencies
 require "securerandom"
 require "concurrent-ruby"
-require "connection_pool"
 require "pg_ephemeral"
 
 module En57

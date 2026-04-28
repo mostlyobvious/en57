@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "pg"
+
 module En57
   class PgAdapter
     def initialize(connection_or_pool)
@@ -23,6 +25,29 @@ module En57
       rescue StandardError
         connection.exec("ROLLBACK")
         raise
+      end
+    end
+  end
+
+  class EventStore
+    def self.for_pg(connection_uri)
+      new(Repository.new(PgAdapter.new(PG.connect(connection_uri)), JsonSerializer.new))
+    end
+  end
+
+  if defined?(ConnectionPool)
+    class EventStore
+      def self.for_pooled_pg(connection_uri, max_connections: 5)
+        new(
+          Repository.new(
+            PgAdapter.new(
+              ConnectionPool.new(size: max_connections) do
+                PG.connect(connection_uri)
+              end,
+            ),
+            JsonSerializer.new,
+          ),
+        )
       end
     end
   end
