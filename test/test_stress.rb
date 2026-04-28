@@ -4,9 +4,9 @@ require "test_helper"
 
 module En57
   class TestStress < IntegrationTest
-    ADAPTERS.each do |adapter_name, factory|
+    ADAPTERS.each do |name, factory|
       define_method(
-        "test_only_one_writer_can_consume_account_credits_with_#{adapter_name}",
+        "test_#{name}_only_one_writer_can_consume_account_credits",
       ) do
         with_event_store(factory) do |event_store|
           event_store.append(
@@ -21,51 +21,48 @@ module En57
             ],
           )
 
-            barrier = Concurrent::CyclicBarrier.new(concurrency)
-            threads =
-              Array.new(concurrency) do
-                Thread.new do
-                  Thread.current.report_on_exception = false
+          barrier = Concurrent::CyclicBarrier.new(concurrency)
+          threads =
+            Array.new(concurrency) do
+              Thread.new do
+                Thread.current.report_on_exception = false
 
-                  account_scope = event_store.read.with_tag(account_tag)
-                  barrier.wait
+                account_scope = event_store.read.with_tag(account_tag)
+                barrier.wait
 
-                  event_store.append(
-                    [
-                      Event.new(
-                        type: "CreditsUsed",
-                        data: {
-                          amount: 100,
-                        },
-                        tags: [account_tag],
-                      ),
-                    ],
-                    fail_if: account_scope.of_type("CreditsUsed"),
-                  )
-                rescue AppendConditionViolated => e
-                  e
-                end
+                event_store.append(
+                  [
+                    Event.new(
+                      type: "CreditsUsed",
+                      data: {
+                        amount: 100,
+                      },
+                      tags: [account_tag],
+                    ),
+                  ],
+                  fail_if: account_scope.of_type("CreditsUsed"),
+                )
+              rescue AppendConditionViolated => e
+                e
               end
+            end
 
-            assert_equal(
-              (concurrency - 1),
-              threads
-                .map(&:value)
-                .select { AppendConditionViolated === it }
-                .size,
-            )
-            assert_equal(
-              1,
-              event_store
-                .read
-                .with_tag(account_tag)
-                .of_type("CreditsUsed")
-                .each
-                .count,
-            )
-          end
+          assert_equal(
+            (concurrency - 1),
+            threads.map(&:value).select { AppendConditionViolated === it }.size,
+          )
+          assert_equal(
+            1,
+            event_store
+              .read
+              .with_tag(account_tag)
+              .of_type("CreditsUsed")
+              .each
+              .count,
+          )
         end
       end
+    end
 
     private
 
