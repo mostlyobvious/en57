@@ -30,7 +30,7 @@ module En57
             ),
           ],
         )
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
         connection.expect(
           :exec_params,
@@ -42,10 +42,7 @@ module En57
         )
         connection.expect(:exec, nil, ["COMMIT"])
 
-        Repository.new(
-          PgAdapter.new(connection_uri),
-          JsonSerializer.new,
-        ).append(
+        Repository.new(PgAdapter.new(connection), JsonSerializer.new).append(
           [
             Event.new(
               id: ids[0],
@@ -74,7 +71,7 @@ module En57
         array_encoder.encode(
           [record_encoder.encode([ids[0], "OrderPlaced", nil, nil, "{}"])],
         )
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
         connection.expect(
           :exec_params,
@@ -86,10 +83,7 @@ module En57
         )
         connection.expect(:exec, nil, ["COMMIT"])
 
-        Repository.new(
-          PgAdapter.new(connection_uri),
-          JsonSerializer.new,
-        ).append(
+        Repository.new(PgAdapter.new(connection), JsonSerializer.new).append(
           [Event.new(id: ids[0], type: "OrderPlaced")],
           fail_if: Query.all,
         )
@@ -97,7 +91,7 @@ module En57
     end
 
     def test_append_passes_fail_if_and_after_conditions
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
         connection.expect(
           :exec_params,
@@ -112,10 +106,7 @@ module En57
         )
         connection.expect(:exec, nil, ["COMMIT"])
 
-        Repository.new(
-          PgAdapter.new(connection_uri),
-          JsonSerializer.new,
-        ).append(
+        Repository.new(PgAdapter.new(connection), JsonSerializer.new).append(
           [],
           fail_if:
             Query.new(
@@ -132,7 +123,7 @@ module En57
     end
 
     def test_append_rolls_back_transaction_on_pg_failure
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
         connection.expect(:exec, nil, ["ROLLBACK"])
         connection.expect(:exec_params, nil) do |sql, params|
@@ -145,31 +136,31 @@ module En57
         end
 
         assert_raises(PG::Error) do
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).append([], fail_if: Query.all)
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).append(
+            [],
+            fail_if: Query.all,
+          )
         end
       end
     end
 
     def test_append_rolls_back_transaction_on_failure
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
         connection.expect(:exec, nil, ["ROLLBACK"])
         connection.expect(:exec_params, nil) { raise RuntimeError, "boom" }
 
         assert_raises(RuntimeError) do
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).append([], fail_if: Query.all)
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).append(
+            [],
+            fail_if: Query.all,
+          )
         end
       end
     end
 
     def test_read_events_with_tags
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(
           :exec_params,
           [
@@ -221,16 +212,15 @@ module En57
               2,
             ],
           ],
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).read(Query.all),
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).read(
+            Query.all,
+          ),
         )
       end
     end
 
     def test_read_events_with_metadata_restores_types
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(
           :exec_params,
           [
@@ -262,16 +252,15 @@ module En57
               1,
             ],
           ],
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).read(Query.all),
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).read(
+            Query.all,
+          ),
         )
       end
     end
 
     def test_read_events_with_null_data_returns_empty_hash
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(
           :exec_params,
           [
@@ -292,10 +281,9 @@ module En57
 
         assert_equal(
           [[Event.new(id: ids[0], type: "OrderPlaced", data: {}), 1]],
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).read(Query.all),
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).read(
+            Query.all,
+          ),
         )
       end
     end
@@ -305,7 +293,7 @@ module En57
         Query.new(
           criteria: [Query::Criteria.new(types: [], tags: ["order_id:123"])],
         )
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(
           :exec_params,
           [
@@ -338,17 +326,16 @@ module En57
               1,
             ],
           ],
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).read(query),
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).read(
+            query,
+          ),
         )
       end
     end
 
     def test_read_events_with_wildcard_query_item
       query = Query.new(criteria: [Query::Criteria.new(types: [], tags: [])])
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(
           :exec_params,
           [
@@ -381,10 +368,9 @@ module En57
               1,
             ],
           ],
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).read(query),
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).read(
+            query,
+          ),
         )
       end
     end
@@ -397,7 +383,7 @@ module En57
             Query::Criteria.new(types: [], tags: ["order_id:456"]),
           ],
         )
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(
           :exec_params,
           [
@@ -434,10 +420,9 @@ module En57
               1,
             ],
           ],
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).read(query),
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).read(
+            query,
+          ),
         )
       end
     end
@@ -447,7 +432,7 @@ module En57
         Query.new(
           criteria: [Query::Criteria.new(types: [], tags: [], after: 42)],
         )
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(
           :exec_params,
           [],
@@ -459,10 +444,9 @@ module En57
 
         assert_equal(
           [],
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).read(query),
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).read(
+            query,
+          ),
         )
       end
     end
@@ -472,7 +456,7 @@ module En57
         Query.new(
           criteria: [Query::Criteria.new(types: ["OrderPlaced"], tags: [])],
         )
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(
           :exec_params,
           [
@@ -505,31 +489,30 @@ module En57
               1,
             ],
           ],
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).read(query),
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).read(
+            query,
+          ),
         )
       end
     end
 
     def test_append_raises_append_condition_violated_from_pg_error_sqlstate
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
         connection.expect(:exec, nil, ["ROLLBACK"])
         connection.expect(:exec_params, nil) { raise(PG::RaiseException.new) }
 
         assert_raises(AppendConditionViolated) do
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).append([], fail_if: Query.all)
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).append(
+            [],
+            fail_if: Query.all,
+          )
         end
       end
     end
 
     def test_append_raises_append_condition_violated_from_serialization_failure_result_sqlstate
-      with_connection_to(connection_uri) do |connection|
+      with_connection do |connection|
         connection.expect(:exec, nil, ["BEGIN ISOLATION LEVEL SERIALIZABLE"])
         connection.expect(:exec, nil, ["ROLLBACK"])
         connection.expect(:exec_params, nil) do
@@ -537,10 +520,10 @@ module En57
         end
 
         assert_raises(AppendConditionViolated) do
-          Repository.new(
-            PgAdapter.new(connection_uri),
-            JsonSerializer.new,
-          ).append([], fail_if: Query.all)
+          Repository.new(PgAdapter.new(connection), JsonSerializer.new).append(
+            [],
+            fail_if: Query.all,
+          )
         end
       end
     end
@@ -549,18 +532,10 @@ module En57
 
     def ids = @ids ||= Hash.new { |h, k| h[k] = SecureRandom.uuid_v7 }
 
-    def connection_uri = "postgres://localhost:5432/en57_test"
-
-    def with_connection_to(connection_uri)
+    def with_connection
       connection = Minitest::Mock.new
 
-      PG.stub(
-        :connect,
-        ->(actual_connection_uri) do
-          assert_equal(connection_uri, actual_connection_uri)
-          connection
-        end,
-      ) { yield connection }
+      yield connection
       connection.verify
     end
 

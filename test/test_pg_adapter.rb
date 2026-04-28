@@ -6,73 +6,48 @@ module En57
   class TestPgAdapter < Minitest::Test
     cover PgAdapter
 
-    def test_with_connection_connects_once_and_yields_connection
-      with_mock_adapter do |connection, adapter, connection_count|
-        connection.expect(:exec, :first, ["SELECT 1"])
-        connection.expect(:exec, :second, ["SELECT 2"])
+    def test_with_connection_yields_connection
+      with_mock_adapter do |connection, adapter|
+        connection.expect(:exec, :selected, ["SELECT 1"])
 
-        assert_equal :first,
+        assert_equal :selected,
                      adapter.with_connection { |conn| conn.exec("SELECT 1") }
-        assert_equal :second,
-                     adapter.with_connection { |conn| conn.exec("SELECT 2") }
-        assert_equal 1, connection_count.call
       end
     end
 
-    def test_with_connection_uses_five_connections_by_default
-      with_connection_count(
-        6,
-      ) do |connections, acquired, release, connection_count|
-        adapter = PgAdapter.new(connection_uri)
+    def test_with_connection_uses_connection_pool
+      connection = Object.new
+      pool = Object.new
+      pool.define_singleton_method(:with) { |&block| block.call(connection) }
+      adapter = PgAdapter.new(pool)
 
-        threads =
-          6.times.map do
-            Thread.new do
-              adapter.with_connection do |connection|
-                acquired << connection
-                release.pop
-              end
-            end
-          end
-
-        assert_equal connections.take(5), 5.times.map { acquired.pop }
-        assert_equal 5, connection_count.call
-        assert_raises(ThreadError) { acquired.pop(true) }
-
-        release << true
-        assert_includes connections.take(5), acquired.pop
-
-        5.times { release << true }
-        threads.each(&:value)
-      end
+      assert_same connection, adapter.with_connection { |conn| conn }
     end
 
-    def test_with_connection_honors_max_connections
-      with_connection_count(
-        3,
-      ) do |connections, acquired, release, connection_count|
-        adapter = PgAdapter.new(connection_uri, max_connections: 2)
+    def test_with_connection_synchronizes_access
+      connection = Object.new
+      adapter = PgAdapter.new(connection)
+      acquired = Queue.new
+      release = Queue.new
 
-        threads =
-          3.times.map do
-            Thread.new do
-              adapter.with_connection do |connection|
-                acquired << connection
-                release.pop
-              end
+      threads =
+        2.times.map do
+          Thread.new do
+            adapter.with_connection do |conn|
+              acquired << conn
+              release.pop
             end
           end
+        end
 
-        assert_equal connections.take(2), 2.times.map { acquired.pop }
-        assert_equal 2, connection_count.call
-        assert_raises(ThreadError) { acquired.pop(true) }
+      assert_same connection, acquired.pop
+      assert_raises(ThreadError) { acquired.pop(true) }
 
-        release << true
-        assert_includes connections.take(2), acquired.pop
+      release << true
+      assert_same connection, acquired.pop
 
-        2.times { release << true }
-        threads.each(&:value)
-      end
+      release << true
+      threads.each(&:value)
     end
 
     def test_with_serializable_transaction_commits_on_success
@@ -120,40 +95,12 @@ module En57
 
     private
 
-    def connection_uri = "postgres://localhost:5432/en57_test"
-
-    def with_connection_count(size)
-      connections = Array.new(size) { Object.new }
-      acquired = Queue.new
-      release = Queue.new
-      connection_count = 0
-
-      PG.stub(
-        :connect,
-        ->(actual_connection_uri) do
-          connection_count += 1
-          assert_equal connection_uri, actual_connection_uri
-          connections.fetch(connection_count - 1)
-        end,
-      ) { yield connections, acquired, release, -> { connection_count } }
-    end
-
     def with_mock_adapter
       connection = Minitest::Mock.new
-      connection_count = 0
 
-      PG.stub(
-        :connect,
-        ->(actual_connection_uri) do
-          connection_count += 1
-          assert_equal connection_uri, actual_connection_uri
-          connection
-        end,
-      ) do
-        yield connection, PgAdapter.new(connection_uri), -> { connection_count }
-      ensure
-        connection.verify
-      end
+      yield connection, PgAdapter.new(connection)
+    ensure
+      connection.verify
     end
   end
 end

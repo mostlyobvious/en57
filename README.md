@@ -6,16 +6,15 @@ DCB-compatible event store library in Ruby with support for PostgreSQL.
 
 ### Connect with raw pg
 
-Use `PgAdapter` when En57 should own its PostgreSQL connection.
+Use `PgAdapter` when your app already owns a pg connection or connection pool.
 
 ```ruby
+pool = ConnectionPool.new(size: 8) { PG.connect("postgres://localhost:5432/en57") }
+
 store =
   En57::EventStore.new(
     En57::Repository.new(
-      En57::PgAdapter.new(
-        "postgres://localhost:5432/en57",
-        max_connections: 8,
-      ),
+      En57::PgAdapter.new(pool),
       En57::JsonSerializer.new,
     ),
   )

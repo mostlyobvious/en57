@@ -9,6 +9,7 @@ require "active_record"
 require "en57"
 require "securerandom"
 require "concurrent-ruby"
+require "connection_pool"
 require "pg_ephemeral"
 
 module En57
@@ -16,6 +17,7 @@ module En57
     POOL_SIZE = 8
     SERVER = PgEphemeral.start
     CONNECTION = PG.connect(SERVER.url)
+    PG_POOL = ConnectionPool.new(size: POOL_SIZE) { PG.connect(SERVER.url) }
     SEQUEL_DB =
       Sequel.connect(
         SERVER.url,
@@ -25,7 +27,7 @@ module En57
     ActiveRecord::Base.establish_connection("#{SERVER.url}&pool=#{POOL_SIZE}")
     AR_POOL = ActiveRecord::Base.connection_pool
     ADAPTERS = {
-      pg: -> { PgAdapter.new(SERVER.url, max_connections: POOL_SIZE) },
+      pg: -> { PgAdapter.new(PG_POOL) },
       sequel: -> { SequelAdapter.new(SEQUEL_DB) },
       active_record: -> { ActiveRecordAdapter.new(AR_POOL) },
     }
@@ -36,6 +38,7 @@ module En57
     Minitest.after_run do
       ActiveRecord::Base.connection_pool.disconnect!
       SEQUEL_DB.disconnect
+      PG_POOL.shutdown(&:close)
       CONNECTION.close
       SERVER.shutdown
     end
