@@ -14,18 +14,26 @@ require "pg_ephemeral"
 
 module En57
   class IntegrationTest < Minitest::Test
-    POOL_SIZE = 8
     SERVER = PgEphemeral.start
+
     CONNECTION = PG.connect(SERVER.url)
+
+    POOL_SIZE = 8
+
     PG_POOL = ConnectionPool.new(size: POOL_SIZE) { PG.connect(SERVER.url) }
+
     SEQUEL_DB =
       Sequel.connect(
         SERVER.url,
         preconnect: :concurrently,
         max_connections: POOL_SIZE,
       )
-    ActiveRecord::Base.establish_connection("#{SERVER.url}&pool=#{POOL_SIZE}")
-    AR_POOL = ActiveRecord::Base.connection_pool
+
+    AR_POOL = -> do
+      ActiveRecord::Base.establish_connection("#{SERVER.url}&pool=#{POOL_SIZE}")
+      ActiveRecord::Base.connection_pool
+    end.call
+
     ADAPTERS = {
       pg: -> { PgAdapter.new(PG_POOL) },
       sequel: -> { SequelAdapter.new(SEQUEL_DB) },
@@ -36,7 +44,7 @@ module En57
       CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
 
     Minitest.after_run do
-      ActiveRecord::Base.connection_pool.disconnect!
+      AR_POOL.disconnect!
       SEQUEL_DB.disconnect
       PG_POOL.shutdown(&:close)
       CONNECTION.close
