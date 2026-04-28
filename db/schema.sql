@@ -59,8 +59,7 @@ WHERE
         tags AS t
     WHERE
         t.event_id = e.id AND t.value = req.value)))) THEN
-        RAISE EXCEPTION 'append_condition_violated'
-            USING ERRCODE = 'P0001';
+        RAISE EXCEPTION 'append_condition_violated';
     END IF;
     INSERT INTO events (id, type, data, meta)
     SELECT

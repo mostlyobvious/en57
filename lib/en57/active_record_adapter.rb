@@ -20,10 +20,6 @@ module En57
           yield connection.raw_connection
         end
       end
-    rescue ActiveRecord::StatementInvalid => e
-      raise e.cause if e.cause.is_a?(PG::Error)
-
-      raise
     end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "pg"
+require "sequel"
 
 module En57
   class SequelAdapter
@@ -16,13 +17,8 @@ module En57
       @database.transaction(isolation: :serializable) do
         @database.synchronize { |connection| yield connection }
       end
-    rescue StandardError => e
-      if defined?(Sequel::DatabaseError) && e.is_a?(Sequel::DatabaseError) &&
-           e.wrapped_exception.is_a?(PG::Error)
-        raise e.wrapped_exception
-      end
-
-      raise
+    rescue Sequel::DatabaseError => e
+      raise e.wrapped_exception
     end
   end
 end

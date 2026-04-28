@@ -4,11 +4,6 @@ require "pg"
 
 module En57
   class Repository
-    SQL_STATES = [
-      RAISE_EXCEPTION = "P0001",
-      SERIALIZATION_FAILURE = "40001",
-    ].freeze
-
     def initialize(adapter, serializer)
       @adapter = adapter
       @serializer = serializer
@@ -46,13 +41,8 @@ module En57
           ],
         )
       end
-    rescue PG::Error => e
-      sqlstate =
-        e.result&.error_field(PG::Result::PG_DIAG_SQLSTATE) ||
-          (e.sqlstate if e.respond_to?(:sqlstate))
-      raise AppendConditionViolated if SQL_STATES.include?(sqlstate)
-
-      raise
+    rescue PG::RaiseException, PG::TRSerializationFailure
+      raise AppendConditionViolated
     end
 
     def read(query)

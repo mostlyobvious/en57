@@ -10,7 +10,8 @@ module En57
         ConnectionPool.new(size: max_connections) { PG.connect(connection_uri) }
     end
 
-    def with_connection = @connection_pool.with { |connection| yield connection }
+    def with_connection =
+      @connection_pool.with { |connection| yield connection }
 
     def with_serializable_transaction
       with_connection do |connection|
