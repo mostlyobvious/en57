@@ -35,7 +35,7 @@ store = En57::EventStore.for_active_record
 ### Append events unconditionally
 
 ```ruby
-store.append(
+event_store.append(
   [
     En57::Event.new(
       type: "OrderPlaced",
@@ -49,32 +49,32 @@ store.append(
 ### Read all events
 
 ```ruby
-events = store.read.each.to_a
+events = event_store.read.each.to_a
 ```
 
 ### Read events with positions
 
 ```ruby
-event, position = store.read.each_with_position.first
+event, position = event_store.read.each_with_position.first
 ```
 
 ### Read events filtered by tags
 
 ```ruby
-events = store.read.with_tag("order_id:123", "customer:42").each.to_a
+events = event_store.read.with_tag("order_id:123", "customer:42").each.to_a
 ```
 
 ### Read events after a position
 
 ```ruby
-events = store.read.after(42).each.to_a
+events = event_store.read.after(42).each.to_a
 ```
 
 ### Read events filtered by merged scopes
 
 ```ruby
-orders = store.read.of_type("OrderPlaced").with_tag("order_id:123")
-price_changes = store.read.of_type("PriceChanged")
+orders = event_store.read.of_type("OrderPlaced").with_tag("order_id:123")
+price_changes = event_store.read.of_type("PriceChanged")
 
 events = (orders | price_changes).each.to_a
 ```
@@ -84,10 +84,10 @@ events = (orders | price_changes).each.to_a
 Example: consume credits only once per account.
 
 ```ruby
-account_scope = store.read.with_tag("account:x")
+account_scope = event_store.read.with_tag("account:x")
 
 begin
-  store.append(
+  event_store.append(
     [
       En57::Event.new(
         type: "CreditsUsed",
@@ -108,9 +108,9 @@ with `after`.
 ```ruby
 last_read_event_position = 42
 
-store.append(
+event_store.append(
   [En57::Event.new(type: "CreditsUsed", tags: ["account:x"])],
-  fail_if: store.read.of_type("CreditsUsed").after(last_read_event_position),
+  fail_if: event_store.read.of_type("CreditsUsed").after(last_read_event_position),
 )
 ```
 
@@ -122,7 +122,7 @@ Example: ensure no event exists with this email tag before writing.
 email_tag = "email:alice@example.com"
 
 begin
-  store.append(
+  event_store.append(
     [
       En57::Event.new(
         type: "UserRegistered",
@@ -130,7 +130,7 @@ begin
         tags: [email_tag],
       ),
     ],
-    fail_if: store.read.with_tag(email_tag),
+    fail_if: event_store.read.with_tag(email_tag),
   )
 rescue En57::AppendConditionViolated
   # email already used
