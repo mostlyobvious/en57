@@ -2,4 +2,4 @@ image = "18"
 
 [instances.main.seeds.schema]
 type = "sql-file"
-path = "db/schema.sql"
+path = "db/schema/0.1.0.sql"

@@ -21,7 +21,7 @@ end
 
 task :format do
   system("stree write **/*.rb")
-  system("pg_format -i db/*.sql")
+  system("pg_format -i db/**/*.sql")
 end
 
 task :mutate do
