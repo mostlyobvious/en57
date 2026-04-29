@@ -1,4 +1,6 @@
-CREATE TABLE events (
+CREATE SCHEMA en57;
+
+CREATE TABLE en57.events (
     position bigint GENERATED ALWAYS AS IDENTITY,
     id uuid PRIMARY KEY,
     type text NOT NULL,
@@ -6,17 +8,17 @@ CREATE TABLE events (
     meta jsonb
 );
 
-CREATE TABLE tags (
-    event_id uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+CREATE TABLE en57.tags (
+    event_id uuid NOT NULL REFERENCES en57.events (id) ON DELETE CASCADE,
     value text NOT NULL,
     PRIMARY KEY (event_id, value)
 );
 
-CREATE INDEX events_type_idx ON events (type);
+CREATE INDEX events_type_idx ON en57.events (type);
 
-CREATE INDEX tags_value_event_id_idx ON tags (value, event_id);
+CREATE INDEX tags_value_event_id_idx ON en57.tags (value, event_id);
 
-CREATE TYPE event_with_tags AS (
+CREATE TYPE en57.event_with_tags AS (
     id uuid,
     type text,
     data jsonb,
@@ -24,7 +26,7 @@ CREATE TYPE event_with_tags AS (
     tags text[]
 );
 
-CREATE FUNCTION append_events (new_events event_with_tags[], append_condition jsonb DEFAULT '{}'::jsonb)
+CREATE FUNCTION en57.append_events (new_events en57.event_with_tags[], append_condition jsonb DEFAULT '{}'::jsonb)
     RETURNS void
     LANGUAGE plpgsql
     AS $$
@@ -37,7 +39,7 @@ BEGIN
         SELECT
             1
         FROM
-            events AS e
+            en57.events AS e
         WHERE
             EXISTS (
             SELECT
@@ -56,12 +58,12 @@ WHERE
     SELECT
         1
     FROM
-        tags AS t
+        en57.tags AS t
     WHERE
         t.event_id = e.id AND t.value = req.value)))) THEN
         RAISE EXCEPTION 'append_condition_violated';
     END IF;
-    INSERT INTO events (id, type, data, meta)
+    INSERT INTO en57.events (id, type, data, meta)
     SELECT
         e.id,
         e.type,
@@ -69,7 +71,7 @@ WHERE
         e.meta
     FROM
         unnest(new_events) AS e;
-    INSERT INTO tags (event_id, value)
+    INSERT INTO en57.tags (event_id, value)
     SELECT
         e.id,
         t.value
@@ -79,7 +81,7 @@ WHERE
 END;
 $$;
 
-CREATE FUNCTION read_events (criteria jsonb[])
+CREATE FUNCTION en57.read_events (criteria jsonb[])
     RETURNS TABLE (
         "position" bigint,
         id uuid,
@@ -108,7 +110,7 @@ filtered_events AS (
         e.data,
         e.meta
     FROM
-        events AS e
+        en57.events AS e
     WHERE
         cardinality(criteria) = 0
         OR EXISTS (
@@ -130,7 +132,7 @@ filtered_events AS (
                         SELECT
                             1
                         FROM
-                            tags AS t
+                            en57.tags AS t
                         WHERE
                             t.event_id = e.id
                             AND t.value = req.value))))
@@ -147,7 +149,7 @@ FROM
         SELECT
             array_agg(t.value ORDER BY t.value) AS tags
         FROM
-            tags AS t
+            en57.tags AS t
         WHERE
             t.event_id = e.id) AS t ON TRUE
 ORDER BY

@@ -56,12 +56,13 @@ module En57
         connection.expect(
           :exec_params,
           :written,
-          ["SELECT append_events()", []],
+          ["SELECT en57.append_events()", []],
         )
         connection.expect(:exec, nil, ["COMMIT"])
 
         adapter.with_serializable_transaction do |conn|
-          assert_equal :written, conn.exec_params("SELECT append_events()", [])
+          assert_equal :written,
+                       conn.exec_params("SELECT en57.append_events()", [])
         end
       end
     end
@@ -78,14 +79,14 @@ module En57
               ["BEGIN ISOLATION LEVEL SERIALIZABLE"],
             )
             connection.expect(:exec_params, nil) do |sql, params|
-              assert_equal "SELECT append_events()", sql
+              assert_equal "SELECT en57.append_events()", sql
               assert_equal [], params
               raise error
             end
             connection.expect(:exec, nil, ["ROLLBACK"])
 
             adapter.with_serializable_transaction do |conn|
-              conn.exec_params("SELECT append_events()", [])
+              conn.exec_params("SELECT en57.append_events()", [])
             end
           end
         end

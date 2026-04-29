@@ -45,7 +45,9 @@ module En57
     }
 
     def setup =
-      CONNECTION.exec("TRUNCATE TABLE tags, events RESTART IDENTITY CASCADE")
+      CONNECTION.exec(
+        "TRUNCATE TABLE en57.tags, en57.events RESTART IDENTITY CASCADE",
+      )
 
     Minitest.after_run do
       AR_POOL.disconnect!

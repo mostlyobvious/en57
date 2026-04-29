@@ -35,14 +35,14 @@ module En57
         raw_connection.expect(
           :exec_params,
           :written,
-          ["SELECT append_events()", []],
+          ["SELECT en57.append_events()", []],
         )
 
         assert_equal(
           :committed,
           adapter.with_serializable_transaction do |conn|
             assert_equal :written,
-                         conn.exec_params("SELECT append_events()", [])
+                         conn.exec_params("SELECT en57.append_events()", [])
           end,
         )
       end
@@ -65,13 +65,13 @@ module En57
             end
             connection.expect(:raw_connection, raw_connection)
             raw_connection.expect(:exec_params, nil) do |sql, params|
-              assert_equal "SELECT append_events()", sql
+              assert_equal "SELECT en57.append_events()", sql
               assert_equal [], params
               raise error
             end
 
             adapter.with_serializable_transaction do |conn|
-              conn.exec_params("SELECT append_events()", [])
+              conn.exec_params("SELECT en57.append_events()", [])
             end
           end
         end

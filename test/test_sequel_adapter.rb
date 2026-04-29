@@ -32,7 +32,7 @@ module En57
         connection.expect(
           :exec_params,
           :written,
-          ["SELECT append_events()", []],
+          ["SELECT en57.append_events()", []],
         )
 
         assert_equal(
@@ -40,7 +40,7 @@ module En57
           adapter.with_serializable_transaction do |conn|
             assert_equal(
               :written,
-              conn.exec_params("SELECT append_events()", []),
+              conn.exec_params("SELECT en57.append_events()", []),
             )
           end,
         )

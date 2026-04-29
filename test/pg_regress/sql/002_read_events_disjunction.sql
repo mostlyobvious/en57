@@ -1,4 +1,4 @@
-INSERT INTO events (id, type, data, meta)
+INSERT INTO en57.events (id, type, data, meta)
 VALUES
     ('00000000-0000-0000-0000-000000000001', 'OrderPlaced', '{}'::jsonb, '{}'::jsonb),
     ('00000000-0000-0000-0000-000000000002', 'OrderPlaced', '{}'::jsonb, '{}'::jsonb),
@@ -6,7 +6,7 @@ VALUES
     ('00000000-0000-0000-0000-000000000004', 'InventoryAdjusted', '{}'::jsonb, '{}'::jsonb),
     ('00000000-0000-0000-0000-000000000005', 'ShipmentScheduled', '{}'::jsonb, '{}'::jsonb);
 
-INSERT INTO tags (event_id, value)
+INSERT INTO en57.tags (event_id, value)
 VALUES
     ('00000000-0000-0000-0000-000000000001', 'order_id:123'),
     ('00000000-0000-0000-0000-000000000002', 'order_id:456'),
@@ -19,7 +19,7 @@ SELECT
     type,
     tags::text
 FROM
-    read_events (ARRAY['{"types":["OrderPlaced"],"tags":["order_id:123"]}'::jsonb, '{"types":["PriceChanged"]}'::jsonb])
+    en57.read_events (ARRAY['{"types":["OrderPlaced"],"tags":["order_id:123"]}'::jsonb, '{"types":["PriceChanged"]}'::jsonb])
 ORDER BY
     id;
 

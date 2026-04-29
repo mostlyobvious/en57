@@ -34,7 +34,7 @@ module En57
 
       @adapter.with_serializable_transaction do |connection|
         connection.exec_params(
-          "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+          "SELECT en57.append_events($1::en57.event_with_tags[], $2::jsonb)",
           [
             @array_encoder.encode(event_records),
             JSON.generate(append_condition),
@@ -51,7 +51,7 @@ module En57
       @adapter
         .with_connection do |connection|
           connection.exec_params(
-            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM en57.read_events($1::jsonb[])",
             [@array_encoder.encode(criteria)],
           )
         end

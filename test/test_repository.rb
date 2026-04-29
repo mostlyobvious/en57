@@ -36,7 +36,7 @@ module En57
           :exec_params,
           nil,
           [
-            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            "SELECT en57.append_events($1::en57.event_with_tags[], $2::jsonb)",
             [expected_events, "{}"],
           ],
         )
@@ -77,7 +77,7 @@ module En57
           :exec_params,
           nil,
           [
-            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            "SELECT en57.append_events($1::en57.event_with_tags[], $2::jsonb)",
             [expected_events, "{}"],
           ],
         )
@@ -97,7 +97,7 @@ module En57
           :exec_params,
           nil,
           [
-            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            "SELECT en57.append_events($1::en57.event_with_tags[], $2::jsonb)",
             [
               array_encoder.encode([]),
               '{"fail_if_events_match":[{"types":["OrderPlaced"],"after":42}]}',
@@ -128,7 +128,7 @@ module En57
         connection.expect(:exec, nil, ["ROLLBACK"])
         connection.expect(:exec_params, nil) do |sql, params|
           assert_equal(
-            "SELECT append_events($1::event_with_tags[], $2::jsonb)",
+            "SELECT en57.append_events($1::en57.event_with_tags[], $2::jsonb)",
             sql,
           )
           assert_equal([array_encoder.encode([]), "{}"], params)
@@ -182,7 +182,7 @@ module En57
             },
           ],
           [
-            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM en57.read_events($1::jsonb[])",
             [array_encoder.encode([])],
           ],
         )
@@ -234,7 +234,7 @@ module En57
             },
           ],
           [
-            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM en57.read_events($1::jsonb[])",
             [array_encoder.encode([])],
           ],
         )
@@ -274,7 +274,7 @@ module En57
             },
           ],
           [
-            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM en57.read_events($1::jsonb[])",
             [array_encoder.encode([])],
           ],
         )
@@ -307,7 +307,7 @@ module En57
             },
           ],
           [
-            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM en57.read_events($1::jsonb[])",
             [array_encoder.encode(['{"tags":["order_id:123"]}'])],
           ],
         )
@@ -349,7 +349,7 @@ module En57
             },
           ],
           [
-            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM en57.read_events($1::jsonb[])",
             [array_encoder.encode(["{}"])],
           ],
         )
@@ -397,7 +397,7 @@ module En57
             },
           ],
           [
-            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM en57.read_events($1::jsonb[])",
             [
               array_encoder.encode(
                 %w[{"tags":["order_id:123"]} {"tags":["order_id:456"]}],
@@ -437,7 +437,7 @@ module En57
           :exec_params,
           [],
           [
-            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM en57.read_events($1::jsonb[])",
             [array_encoder.encode(['{"after":42}'])],
           ],
         )
@@ -470,7 +470,7 @@ module En57
             },
           ],
           [
-            "SELECT position, id, type, data, meta, tags FROM read_events($1::jsonb[])",
+            "SELECT position, id, type, data, meta, tags FROM en57.read_events($1::jsonb[])",
             [array_encoder.encode(['{"types":["OrderPlaced"]}'])],
           ],
         )

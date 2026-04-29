@@ -30,6 +30,15 @@ module En57
       assert_round_trip EventStore.for_sequel(SEQUEL_DB)
     end
 
+    def test_event_store_does_not_conflict_with_public_schema_tables
+      CONNECTION.exec("CREATE TABLE public.events (id integer PRIMARY KEY)")
+      CONNECTION.exec("CREATE TABLE public.tags (id integer PRIMARY KEY)")
+
+      assert_round_trip EventStore.for_pg(SERVER.url)
+    ensure
+      CONNECTION.exec("DROP TABLE IF EXISTS public.tags, public.events")
+    end
+
     private
 
     def with_const(name, value)
