@@ -4,6 +4,29 @@ DCB-compatible event store library in Ruby with support for PostgreSQL.
 
 ## Usage
 
+### Set up the database schema
+
+En57 owns its PostgreSQL schema and tracks the installed schema version in
+the database. Add the rake tasks to your application's `Rakefile`:
+
+```ruby
+require "en57/tasks"
+```
+
+Then install or update the schema with `DATABASE_URL`:
+
+```sh
+DATABASE_URL=postgres://localhost:5432/en57 bundle exec rake en57:migrate
+```
+
+To inspect the current schema status without applying changes:
+
+```sh
+DATABASE_URL=postgres://localhost:5432/en57 bundle exec rake en57:status
+```
+
+Run `en57:migrate` before using the event store for the first time.
+
 ### Connect with raw pg
 
 Use `EventStore.for_pg` when En57 should own a pg connection.
