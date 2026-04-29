@@ -18,7 +18,7 @@ CREATE INDEX events_type_idx ON en57.events (type);
 
 CREATE INDEX tags_value_event_id_idx ON en57.tags (value, event_id);
 
-CREATE TYPE en57.event_with_tags AS (
+CREATE TYPE en57.event AS (
     id uuid,
     type text,
     data jsonb,
@@ -26,7 +26,7 @@ CREATE TYPE en57.event_with_tags AS (
     tags text[]
 );
 
-CREATE FUNCTION en57.append_events (new_events en57.event_with_tags[], append_condition jsonb DEFAULT '{}'::jsonb)
+CREATE FUNCTION en57.append_events (new_events en57.event[], append_condition jsonb DEFAULT '{}'::jsonb)
     RETURNS void
     LANGUAGE plpgsql
     AS $$

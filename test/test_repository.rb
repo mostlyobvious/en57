@@ -36,7 +36,7 @@ module En57
           :exec_params,
           nil,
           [
-            "SELECT en57.append_events($1::en57.event_with_tags[], $2::jsonb)",
+            "SELECT en57.append_events($1::en57.event[], $2::jsonb)",
             [expected_events, "{}"],
           ],
         )
@@ -77,7 +77,7 @@ module En57
           :exec_params,
           nil,
           [
-            "SELECT en57.append_events($1::en57.event_with_tags[], $2::jsonb)",
+            "SELECT en57.append_events($1::en57.event[], $2::jsonb)",
             [expected_events, "{}"],
           ],
         )
@@ -97,7 +97,7 @@ module En57
           :exec_params,
           nil,
           [
-            "SELECT en57.append_events($1::en57.event_with_tags[], $2::jsonb)",
+            "SELECT en57.append_events($1::en57.event[], $2::jsonb)",
             [
               array_encoder.encode([]),
               '{"fail_if_events_match":[{"types":["OrderPlaced"],"after":42}]}',
@@ -128,7 +128,7 @@ module En57
         connection.expect(:exec, nil, ["ROLLBACK"])
         connection.expect(:exec_params, nil) do |sql, params|
           assert_equal(
-            "SELECT en57.append_events($1::en57.event_with_tags[], $2::jsonb)",
+            "SELECT en57.append_events($1::en57.event[], $2::jsonb)",
             sql,
           )
           assert_equal([array_encoder.encode([]), "{}"], params)
