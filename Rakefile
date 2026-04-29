@@ -4,6 +4,7 @@ require "bundler/gem_tasks"
 require "fileutils"
 require "minitest/test_task"
 require "uri"
+require_relative "lib/en57/tasks"
 
 Minitest::TestTask.create
 
