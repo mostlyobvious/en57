@@ -9,7 +9,7 @@ DCB-compatible event store library in Ruby with support for PostgreSQL.
 Use `EventStore.for_pg` when En57 should own a pg connection.
 
 ```ruby
-store = En57::EventStore.for_pg("postgres://localhost:5432/en57")
+event_store = En57::EventStore.for_pg("postgres://localhost:5432/en57")
 ```
 
 ### Connect with Sequel
@@ -19,7 +19,7 @@ Use `EventStore.for_sequel` when your app already owns a Sequel database.
 ```ruby
 database = Sequel.connect("postgres://localhost:5432/en57")
 
-store = En57::EventStore.for_sequel(database)
+event_store = En57::EventStore.for_sequel(database)
 ```
 
 ### Connect with ActiveRecord
@@ -29,7 +29,7 @@ Use `EventStore.for_active_record` when your app uses ActiveRecord.
 ```ruby
 ActiveRecord::Base.establish_connection("postgres://localhost:5432/en57")
 
-store = En57::EventStore.for_active_record
+event_store = En57::EventStore.for_active_record
 ```
 
 ### Append events unconditionally
