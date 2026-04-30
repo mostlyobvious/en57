@@ -5,6 +5,8 @@ require "uri"
 
 module En57
   class TestMigrator < IntegrationTest
+    TLDR.dont_run_these_in_parallel!
+
     def test_status_reports_pending_schema_on_empty_database
       with_database do |url|
         assert_equal(
