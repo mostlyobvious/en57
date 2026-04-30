@@ -39,7 +39,7 @@ module En57
     end.call
 
     ADAPTERS = {
-      pg: -> { PgAdapter.new(PG_POOL) },
+      pg: -> { PgAdapter.for_pool(PG_POOL) },
       sequel: -> { SequelAdapter.new(SEQUEL_DB) },
       active_record: -> { ActiveRecordAdapter.new(AR_POOL) },
     }

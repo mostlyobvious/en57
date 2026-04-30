@@ -4,18 +4,15 @@ require "pg"
 
 module En57
   class PgAdapter
-    def initialize(connection_or_pool)
-      @with_connection =
-        if connection_or_pool.respond_to?(:with)
-          connection_or_pool.public_method(:with)
-        else
-          mutex = Mutex.new
-          ->(&block) { mutex.synchronize { block.call(connection_or_pool) } }
-        end
+    def self.for_pool(connection_pool) = new(connection_pool)
+
+    def self.for_connection(connection) = new(Mono.new(connection))
+
+    def initialize(connection_pool)
+      @connection_pool = connection_pool
     end
 
-    def with_connection =
-      @with_connection.call { |connection| yield connection }
+    def with_connection(&block) = @connection_pool.with(&block)
 
     def with_serializable_transaction
       with_connection do |connection|
@@ -27,11 +24,27 @@ module En57
         raise
       end
     end
+
+    class Mono
+      def initialize(connection)
+        @connection = connection
+        @mutex = Mutex.new
+      end
+
+      def with
+        @mutex.synchronize { yield @connection }
+      end
+    end
   end
 
   class EventStore
     def self.for_pg(connection_uri)
-      new(Repository.new(PgAdapter.new(PG.connect(connection_uri)), JsonSerializer.new))
+      new(
+        Repository.new(
+          PgAdapter.for_connection(PG.connect(connection_uri)),
+          JsonSerializer.new,
+        ),
+      )
     end
   end
 
@@ -40,7 +53,7 @@ module En57
       def self.for_pooled_pg(connection_uri, max_connections: 5)
         new(
           Repository.new(
-            PgAdapter.new(
+            PgAdapter.for_pool(
               ConnectionPool.new(size: max_connections) do
                 PG.connect(connection_uri)
               end,

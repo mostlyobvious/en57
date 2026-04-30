@@ -15,18 +15,18 @@ module En57
       end
     end
 
-    def test_with_connection_uses_connection_pool
+    def test_for_pool_uses_connection_pool
       connection = Object.new
       pool = Object.new
       pool.define_singleton_method(:with) { |&block| block.call(connection) }
-      adapter = PgAdapter.new(pool)
+      adapter = PgAdapter.for_pool(pool)
 
       assert_same connection, adapter.with_connection { |conn| conn }
     end
 
-    def test_with_connection_synchronizes_access
+    def test_for_connection_synchronizes_access
       connection = Object.new
-      adapter = PgAdapter.new(connection)
+      adapter = PgAdapter.for_connection(connection)
       acquired = Queue.new
       release = Queue.new
 
@@ -99,7 +99,7 @@ module En57
     def with_mock_adapter
       connection = Minitest::Mock.new
 
-      yield connection, PgAdapter.new(connection)
+      yield connection, PgAdapter.for_connection(connection)
     ensure
       connection.verify
     end

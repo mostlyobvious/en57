@@ -49,7 +49,10 @@ module En57
         connection = PG.connect(url)
         event_store =
           EventStore.new(
-            Repository.new(PgAdapter.new(connection), JsonSerializer.new),
+            Repository.new(
+              PgAdapter.for_connection(connection),
+              JsonSerializer.new,
+            ),
           )
 
         assert_equal [event], event_store.append([event]).read.each.to_a
