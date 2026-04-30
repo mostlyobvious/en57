@@ -1,0 +1,15 @@
+when:
+  - event: ["push"]
+engine: "nixery"
+clone:
+  skip: false
+  depth: 0
+  submodules: false
+dependencies:
+  - ruby
+  - postgresql
+environment:
+  MUTANT_SINCE: 'HEAD^'
+steps:
+  - name: "Units, integration, incremental mutation"
+    command: bin/rake
