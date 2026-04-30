@@ -29,3 +29,5 @@ jobs:
           bundler-cache: true
       - name: Run the default task
         run: bin/rake
+      - name: Full mutant run
+        run: bin/mutant run
