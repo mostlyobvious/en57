@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require "tldr/autorun"
 require "minitest/mock"
-require "mutant/minitest/coverage"
+require "mutant/tldr/coverage"
 
 # optional dependencies
 require "sequel"
@@ -17,7 +17,7 @@ require "concurrent-ruby"
 require "pg_ephemeral"
 
 module En57
-  class IntegrationTest < Minitest::Test
+  class IntegrationTest < TLDR
     SERVER = PgEphemeral.start
 
     CONNECTION = PG.connect(SERVER.url)
@@ -49,12 +49,15 @@ module En57
         "TRUNCATE TABLE en57.tags, en57.events RESTART IDENTITY CASCADE",
       )
 
-    Minitest.after_run do
+    at_exit do
       AR_POOL.disconnect!
       SEQUEL_DB.disconnect
       PG_POOL.shutdown(&:close)
       CONNECTION.close
-      SERVER.shutdown
+      begin
+        SERVER.shutdown
+      rescue Errno::ECHILD
+      end
     end
   end
 end

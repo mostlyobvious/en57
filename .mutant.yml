@@ -8,7 +8,7 @@ requires:
 - connection_pool
 - en57
 integration:
-  name: minitest
+  name: tldr
 matcher:
   subjects:
     - En57*

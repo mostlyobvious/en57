@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestScope < Minitest::Test
+  class TestScope < TLDR
     cover Scope
 
     def test_empty_scope_returns_query_all

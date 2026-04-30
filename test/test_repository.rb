@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestRepository < Minitest::Test
+  class TestRepository < TLDR
     cover Repository
 
     def test_append_wraps_write_in_serializable_transaction

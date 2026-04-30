@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestPgAdapter < Minitest::Test
+  class TestPgAdapter < TLDR
     cover PgAdapter
 
     def test_with_connection_yields_connection

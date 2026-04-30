@@ -2,11 +2,12 @@
 
 require "bundler/gem_tasks"
 require "fileutils"
-require "minitest/test_task"
+require "tldr/rake"
 require "uri"
 require_relative "lib/en57/tasks"
 
-Minitest::TestTask.create
+desc "Run tests"
+task test: :tldr
 
 def pg_regress_bin
   candidates = [

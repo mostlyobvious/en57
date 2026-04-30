@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestEvent < Minitest::Test
+  class TestEvent < TLDR
     cover Event
 
     def test_generates_uuid_v7_by_default
