@@ -29,13 +29,16 @@ module En57
     def migrate!
       current = current_version
       raise partial_migration_error if current == :partial
-      raise MigrationError, "Cannot infer En57 schema version" if current == :unversioned
+      if current == :unversioned
+        raise MigrationError, "Cannot infer En57 schema version"
+      end
       return if current == SCHEMA_VERSION
 
       if current == :fresh
         install_fresh_schema
       else
-        raise MigrationError, "No En57 schema diff from #{current} to #{SCHEMA_VERSION}"
+        raise MigrationError,
+              "No En57 schema diff from #{current} to #{SCHEMA_VERSION}"
       end
     end
 
@@ -45,14 +48,21 @@ module En57
 
     def state_for(current)
       case current
-      when SCHEMA_VERSION then :up_to_date
-      when :partial then :partial
-      else :pending
+      when SCHEMA_VERSION
+        :up_to_date
+      when :partial
+        :partial
+      else
+        :pending
       end
     end
 
     def pending_for(current)
-      current == SCHEMA_VERSION || current == :partial ? [] : [schema_path(SCHEMA_VERSION)]
+      if current == SCHEMA_VERSION || current == :partial
+        []
+      else
+        [schema_path(SCHEMA_VERSION)]
+      end
     end
 
     def warning_for(current)
@@ -67,7 +77,10 @@ module En57
       with_connection do |connection|
         next :fresh unless schema_info_table?(connection)
 
-        result = connection.exec("SELECT schema_version, in_progress FROM public.en57_schema_info WHERE id = 1")
+        result =
+          connection.exec(
+            "SELECT schema_version, in_progress FROM public.en57_schema_info WHERE id = 1",
+          )
         next :unversioned if result.ntuples.zero?
 
         row = result.first
@@ -123,7 +136,10 @@ module En57
 
     def schema_info_table?(connection)
       connection
-        .exec_params("SELECT to_regclass($1)::text", ["public.en57_schema_info"])
+        .exec_params(
+          "SELECT to_regclass($1)::text",
+          ["public.en57_schema_info"],
+        )
         .first
         .fetch("to_regclass")
     end
