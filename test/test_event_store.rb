@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestEventStore < Minitest::Test
+  class TestEventStore < TLDR
     cover EventStore
 
     def test_append_event

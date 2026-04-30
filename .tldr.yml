@@ -1,0 +1,2 @@
+helper_paths:
+  - test/test_helper.rb

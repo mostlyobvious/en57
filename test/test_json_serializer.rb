@@ -8,7 +8,7 @@ require "json"
 require "openssl"
 
 module En57
-  class TestJsonSerializer < Minitest::Test
+  class TestJsonSerializer < TLDR
     cover JsonSerializer
 
     class Example < Data.define(:name, :value, :serialized, :klass)

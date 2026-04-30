@@ -4,6 +4,8 @@ require "test_helper"
 
 module En57
   class TestFactories < IntegrationTest
+    TLDR.dont_run_these_in_parallel!
+
     def test_for_pg_round_trips_with_connection_uri
       assert_round_trip EventStore.for_pg(SERVER.url)
     end

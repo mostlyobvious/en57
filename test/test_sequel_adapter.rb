@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestSequelAdapter < Minitest::Test
+  class TestSequelAdapter < TLDR
     cover SequelAdapter
 
     def test_with_connection_synchronizes_and_yields_connection

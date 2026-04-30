@@ -4,6 +4,8 @@ require "test_helper"
 
 module En57
   class TestStress < IntegrationTest
+    TLDR.dont_run_these_in_parallel!
+
     ADAPTERS.each do |name, factory|
       define_method(
         "test_#{name}_only_one_writer_can_consume_account_credits",

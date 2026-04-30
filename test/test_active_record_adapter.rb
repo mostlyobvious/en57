@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestActiveRecordAdapter < Minitest::Test
+  class TestActiveRecordAdapter < TLDR
     cover ActiveRecordAdapter
 
     def test_with_connection_checks_out_connection_and_yields_raw_connection

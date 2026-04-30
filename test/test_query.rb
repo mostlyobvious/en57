@@ -3,7 +3,7 @@
 require "test_helper"
 
 module En57
-  class TestQuery < Minitest::Test
+  class TestQuery < TLDR
     cover Query
 
     def test_refine_last_starts_from_all_item
