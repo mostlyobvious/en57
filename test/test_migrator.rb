@@ -61,6 +61,31 @@ module En57
       end
     end
 
+    def test_append_events_notifies_listeners
+      with_database do |url|
+        Migrator.new(url).migrate!
+        listener = PG.connect(url)
+        writer = PG.connect(url)
+        listener.exec('LISTEN "en57.events_appended"')
+
+        writer.exec_params(<<~SQL)
+            SELECT en57.append_events(
+              ARRAY[
+                ROW(gen_random_uuid(), 'One', '{}'::jsonb, '{}'::jsonb, ARRAY[]::text[]),
+                ROW(gen_random_uuid(), 'Two', '{}'::jsonb, '{}'::jsonb, ARRAY[]::text[])
+              ]::en57.event[],
+              '{}'::jsonb
+            )
+          SQL
+
+        assert_equal "en57.events_appended", listener.wait_for_notify(1)
+        refute listener.wait_for_notify(0.1)
+      ensure
+        listener&.close
+        writer&.close
+      end
+    end
+
     def test_migrate_leaves_partial_status_after_failure
       with_database do |url|
         connection = PG.connect(url)

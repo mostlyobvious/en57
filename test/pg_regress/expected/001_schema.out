@@ -78,6 +78,10 @@ WHERE
     FROM
         unnest(new_events) AS e
     CROSS JOIN LATERAL unnest(COALESCE(e.tags, ARRAY[]::text[])) AS t (value);
+    IF cardinality(new_events) > 0 THEN
+        PERFORM
+            pg_notify('en57.events_appended', '');
+    END IF;
 END;
 $$;
 
